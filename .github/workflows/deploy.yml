@@ -60,11 +60,9 @@ jobs:
           APP_DIR="$1"
           cd "$APP_DIR"
 
-          # Cria o arquivo apenas no primeiro deploy. Deploys seguintes preservam segredos locais.
-          if [ ! -f .env ]; then
-            cp .env.example .env
-            echo "Criado .env a partir de .env.example"
-          fi
+          # O laboratório usa os valores preenchidos no .env.example em todo deploy.
+          cp .env.example .env
+          echo "Atualizado .env a partir de .env.example"
 
           for variable in APP_DB_PASSWORD ZBX_DB_PASSWORD GRAFANA_ADMIN_PASSWORD ZABBIX_API_USER ZABBIX_API_PASSWORD; do
             if ! grep -Eq "^${variable}=.+$" .env; then

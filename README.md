@@ -34,7 +34,7 @@ Pré-requisitos: Docker Compose e, para carga, `k6` ou `hey`.
 
 ```bash
 cp .env.example .env
-# Preencha os segredos no .env sem versioná-lo.
+# Os valores do exemplo são apenas para o laboratório.
 chmod +x scripts/*.sh
 docker compose up -d --build
 ./scripts/smoke.sh
@@ -59,7 +59,8 @@ Observe durante o roteiro:
 Arquitetura detalhada: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 O workflow de deploy usa secrets do GitHub e não publica informações da VPS no
-código. A configuração operacional completa fica fora do material público.
+código. No laboratório, ele copia o `.env.example` preenchido para `.env` em
+todo deploy. Não use essas credenciais de demonstração em produção.
 
 ## Limpeza
 
