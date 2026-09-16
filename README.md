@@ -17,6 +17,7 @@ Usuário → Nginx → Checkout API → PostgreSQL
 - PostgreSQL/TimescaleDB com pool de conexões controlado.
 - Nginx, Prometheus, Grafana, Loki, Jaeger e OpenTelemetry.
 - Zabbix opcional para comparar disponibilidade com saúde real.
+- OpenDockWatch separado para acompanhar os containers Docker da VPS.
 - Scripts shell para iniciar, provocar, observar e recuperar o incidente.
 
 ## O que vamos testar e comprovar
@@ -55,6 +56,10 @@ Observe durante o roteiro:
 - Grafana: <http://localhost:3000>
 - Prometheus: <http://localhost:9090>
 - Jaeger: <http://localhost:16686>
+- OpenDockWatch separado: <http://localhost:3001>
+
+O OpenDockWatch possui Compose, configuração e ciclo de vida próprios em
+[opendockwatch/](opendockwatch/). Ele não é iniciado pelo stack principal.
 
 Arquitetura detalhada: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

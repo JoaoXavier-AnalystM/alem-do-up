@@ -1,0 +1,8 @@
+{
+  "hosts": [
+    {
+      "id": "local",
+      "name": "Docker local"
+    }
+  ]
+}

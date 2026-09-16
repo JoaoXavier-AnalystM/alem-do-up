@@ -1,0 +1,28 @@
+name: opendockwatch
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-hardening: &hardening
+  init: true
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  opendockwatch:
+    container_name: opendockwatch
+    image: darks1d3r/opendockwatch:2.7.0
+    restart: unless-stopped
+    <<: *hardening
+    logging: *default-logging
+    ports:
+      - "${OPENDOCKWATCH_PORT:-3001}:3000"
+    volumes:
+      # Necessário para listar e controlar os containers deste host.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./.env:/app/.env:ro

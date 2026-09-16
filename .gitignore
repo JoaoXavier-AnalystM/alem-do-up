@@ -19,3 +19,6 @@ presentation/captures/
 *.log
 .DS_Store
 Thumbs.db
+opendockwatch/.env
+opendockwatch/config/hosts.json
+opendockwatch/data/
