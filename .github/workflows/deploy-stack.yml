@@ -102,6 +102,9 @@ jobs:
           mkdir -p data
           if [ ! -f config/hosts.json ]; then
             cp config/hosts.example.json config/hosts.json
+          elif grep -q '"hosts"' config/hosts.json; then
+            cp config/hosts.json config/hosts.json.invalid-format.bak
+            cp config/hosts.example.json config/hosts.json
           fi
 
           chmod 600 .env

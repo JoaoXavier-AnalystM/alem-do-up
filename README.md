@@ -53,7 +53,7 @@ chmod +x scripts/*.sh
 Observe durante o roteiro:
 
 - Aplicação: <http://localhost:5055>
-- Grafana: <http://localhost:3000>
+- Grafana: <http://localhost:3030>
 - Prometheus: <http://localhost:9090>
 - Jaeger: <http://localhost:16686>
 - OpenDockWatch separado: <http://localhost:3001>

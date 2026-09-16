@@ -17,6 +17,10 @@ fi
 mkdir -p data
 if [ ! -f config/hosts.json ]; then
   cp config/hosts.example.json config/hosts.json
+elif grep -q '"hosts"' config/hosts.json; then
+  cp config/hosts.json config/hosts.json.invalid-format.bak
+  cp config/hosts.example.json config/hosts.json
+  echo "Formato antigo de config/hosts.json corrigido; backup salvo em config/hosts.json.invalid-format.bak."
 fi
 
 docker compose pull
