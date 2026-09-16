@@ -1,4 +1,21 @@
+# Python and local tooling
 __pycache__/
 .pytest_cache/
+*.py[cod]
+
+# Local secrets and environment files
 .env
+.env.*
+!.env.example
+
+# Local-only project context and source material
+HANDOFF.md
+sources/
+docs/superpowers/
+docs/internal/
+
+# Generated presentation captures and local files
 presentation/captures/
+*.log
+.DS_Store
+Thumbs.db

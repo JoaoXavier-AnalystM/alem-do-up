@@ -3,3 +3,4 @@ __pycache__
 .git
 sources
 presentation/captures
+docs/internal

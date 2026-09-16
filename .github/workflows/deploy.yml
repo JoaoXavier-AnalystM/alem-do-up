@@ -1,0 +1,79 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$VPS_HOST"
+          test -n "$VPS_PORT"
+          test -n "$VPS_USER"
+          test -n "$VPS_APP_DIR"
+          test -n "$VPS_SSH_KEY"
+
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Upload application
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar \
+            --exclude=.git \
+            --exclude=.env \
+            --exclude=presentation/captures \
+            -czf - . |
+            ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+              "mkdir -p '$VPS_APP_DIR' && tar -xzf - -C '$VPS_APP_DIR'"
+
+      - name: Build and restart stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' \
+            -- "$VPS_APP_DIR" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+          APP_DIR="$1"
+          cd "$APP_DIR"
+
+          # Cria o arquivo apenas no primeiro deploy. Deploys seguintes preservam segredos locais.
+          if [ ! -f .env ]; then
+            cp .env.example .env
+            echo "Criado .env a partir de .env.example"
+          fi
+
+          for variable in APP_DB_PASSWORD ZBX_DB_PASSWORD GRAFANA_ADMIN_PASSWORD ZABBIX_API_USER ZABBIX_API_PASSWORD; do
+            if ! grep -Eq "^${variable}=.+$" .env; then
+              echo "Variável obrigatória ausente ou vazia no .env: ${variable}" >&2
+              exit 1
+            fi
+          done
+
+          chmod +x scripts/*.sh
+          docker compose --profile zabbix up -d --build
+          ./scripts/smoke.sh
+          REMOTE_SCRIPT
