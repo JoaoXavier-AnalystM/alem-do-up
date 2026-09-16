@@ -102,7 +102,7 @@ services:
     depends_on: [loki]
     networks: [lab]
   jaeger:
-    image: jaegertracing/all-in-one:2.20.0
+    image: jaegertracing/jaeger:2.20.0
     restart: unless-stopped
     <<: *hardening
     logging: *default-logging
@@ -184,7 +184,7 @@ services:
     networks: [lab]
   zabbix-agent2:
     profiles: [zabbix]
-    image: zabbix/zabbix-agent2:ubuntu-7.4-latest
+    image: zabbix/zabbix-agent2:alpine-7.4-latest
     restart: unless-stopped
     init: true
     logging: *default-logging
