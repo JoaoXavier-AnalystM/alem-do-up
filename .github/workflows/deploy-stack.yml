@@ -21,9 +21,6 @@ jobs:
       VPS_USER: ${{ secrets.VPS_USER }}
       VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-      OPENDOCKWATCH_AUTH_USER: ${{ secrets.OPENDOCKWATCH_AUTH_USER }}
-      OPENDOCKWATCH_AUTH_PASS_HASH: ${{ secrets.OPENDOCKWATCH_AUTH_PASS_HASH }}
-      OPENDOCKWATCH_SESSION_SECRET: ${{ secrets.OPENDOCKWATCH_SESSION_SECRET }}
 
     steps:
       - name: Checkout
@@ -38,9 +35,6 @@ jobs:
           test -n "$VPS_USER"
           test -n "$VPS_APP_DIR"
           test -n "$VPS_SSH_KEY"
-          test -n "$OPENDOCKWATCH_AUTH_USER"
-          test -n "$OPENDOCKWATCH_AUTH_PASS_HASH"
-          test -n "$OPENDOCKWATCH_SESSION_SECRET"
 
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/deploy_key"
@@ -63,26 +57,47 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          env_file="$(mktemp)"
-          trap 'rm -f "$env_file"' EXIT
-          cat > "$env_file" <<EOF
-          AUTH_USER=$OPENDOCKWATCH_AUTH_USER
-          AUTH_PASS_HASH=$OPENDOCKWATCH_AUTH_PASS_HASH
-          SESSION_SECRET=$OPENDOCKWATCH_SESSION_SECRET
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' \
+            -- "$VPS_APP_DIR" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+          ROOT_DIR="$1"
+          STACK_DIR="$ROOT_DIR/opendockwatch"
+          cd "$ROOT_DIR"
+
+          if [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+          test -f .env
+          auth_user="$(awk -F= '/^GRAFANA_ADMIN_USER=/{print substr($0, index($0, "=") + 1)}' .env | tr -d '\r')"
+          auth_password="$(awk -F= '/^GRAFANA_ADMIN_PASSWORD=/{print substr($0, index($0, "=") + 1)}' .env | tr -d '\r')"
+          test -n "$auth_user"
+          test -n "$auth_password"
+
+          mkdir -p "$STACK_DIR/data"
+          if [ ! -f "$STACK_DIR/config/hosts.json" ]; then
+            cp "$STACK_DIR/config/hosts.example.json" "$STACK_DIR/config/hosts.json"
+          fi
+
+          session_secret=""
+          if [ -f "$STACK_DIR/.env" ]; then
+            session_secret="$(awk -F= '/^SESSION_SECRET=/{print substr($0, index($0, "=") + 1)}' "$STACK_DIR/.env" | tr -d '\r')"
+          fi
+          if [ -z "$session_secret" ]; then
+            session_secret="$(openssl rand -hex 32)"
+          fi
+
+          image="darks1d3r/opendockwatch:2.7.0"
+          auth_hash="$(docker run --rm "$image" node scripts/hash-password.js "$auth_password")"
+          umask 077
+          cat > "$STACK_DIR/.env" <<EOF
+          AUTH_USER=$auth_user
+          AUTH_PASS_HASH=$auth_hash
+          SESSION_SECRET=$session_secret
           TRUST_PROXY=false
           OPENDOCKWATCH_PORT=3001
           EOF
 
-          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
-            "mkdir -p '$VPS_APP_DIR/opendockwatch' && chmod 700 '$VPS_APP_DIR/opendockwatch'"
-          scp -q -i "$HOME/.ssh/deploy_key" -P "$VPS_PORT" "$env_file" \
-            "$VPS_USER@$VPS_HOST:$VPS_APP_DIR/opendockwatch/.env"
-
-          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' \
-            -- "$VPS_APP_DIR/opendockwatch" <<'REMOTE_SCRIPT'
-          set -euo pipefail
-          APP_DIR="$1"
-          cd "$APP_DIR"
+          cd "$STACK_DIR"
 
           mkdir -p data
           if [ ! -f config/hosts.json ]; then
