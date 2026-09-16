@@ -1,0 +1,97 @@
+name: Deploy Stack
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "opendockwatch/**"
+      - ".github/workflows/deploy-stack.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-opendockwatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      OPENDOCKWATCH_AUTH_USER: ${{ secrets.OPENDOCKWATCH_AUTH_USER }}
+      OPENDOCKWATCH_AUTH_PASS_HASH: ${{ secrets.OPENDOCKWATCH_AUTH_PASS_HASH }}
+      OPENDOCKWATCH_SESSION_SECRET: ${{ secrets.OPENDOCKWATCH_SESSION_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$VPS_HOST"
+          test -n "$VPS_PORT"
+          test -n "$VPS_USER"
+          test -n "$VPS_APP_DIR"
+          test -n "$VPS_SSH_KEY"
+          test -n "$OPENDOCKWATCH_AUTH_USER"
+          test -n "$OPENDOCKWATCH_AUTH_PASS_HASH"
+          test -n "$OPENDOCKWATCH_SESSION_SECRET"
+
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Upload OpenDockWatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar \
+            --exclude=.git \
+            --exclude=.env \
+            --exclude=data \
+            -czf - -C opendockwatch . |
+            ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+              "mkdir -p '$VPS_APP_DIR/opendockwatch' && tar -xzf - -C '$VPS_APP_DIR/opendockwatch'"
+
+      - name: Configure and restart OpenDockWatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          env_file="$(mktemp)"
+          trap 'rm -f "$env_file"' EXIT
+          cat > "$env_file" <<EOF
+          AUTH_USER=$OPENDOCKWATCH_AUTH_USER
+          AUTH_PASS_HASH=$OPENDOCKWATCH_AUTH_PASS_HASH
+          SESSION_SECRET=$OPENDOCKWATCH_SESSION_SECRET
+          TRUST_PROXY=false
+          OPENDOCKWATCH_PORT=3001
+          EOF
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+            "mkdir -p '$VPS_APP_DIR/opendockwatch' && chmod 700 '$VPS_APP_DIR/opendockwatch'"
+          scp -q -i "$HOME/.ssh/deploy_key" -P "$VPS_PORT" "$env_file" \
+            "$VPS_USER@$VPS_HOST:$VPS_APP_DIR/opendockwatch/.env"
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' \
+            -- "$VPS_APP_DIR/opendockwatch" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+          APP_DIR="$1"
+          cd "$APP_DIR"
+
+          mkdir -p data
+          if [ ! -f config/hosts.json ]; then
+            cp config/hosts.example.json config/hosts.json
+          fi
+
+          chmod 600 .env
+          chmod +x scripts/*.sh
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker compose ps
+          REMOTE_SCRIPT
