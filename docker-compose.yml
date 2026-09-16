@@ -85,13 +85,13 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER in .env}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
-      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app:6.0.3
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app:6.7.0
       APP_DB_NAME: ${APP_DB_NAME:?Set APP_DB_NAME in .env}
       APP_DB_USER: ${APP_DB_USER:?Set APP_DB_USER in .env}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env}
       ZABBIX_API_USER: ${ZABBIX_API_USER:?Set ZABBIX_API_USER in .env}
       ZABBIX_API_PASSWORD: ${ZABBIX_API_PASSWORD:?Set ZABBIX_API_PASSWORD in .env}
-    volumes: ["./observability/grafana/provisioning:/etc/grafana/provisioning:ro", "./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"]
+    volumes: ["grafana_data:/var/lib/grafana", "./observability/grafana/provisioning:/etc/grafana/provisioning:ro", "./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"]
     depends_on: [prometheus, loki, jaeger]
     networks: [lab]
   loki:
@@ -218,6 +218,7 @@ services:
     networks: [lab]
 volumes:
   postgres_data:
+  grafana_data:
   zabbix_data:
 networks:
   lab:
