@@ -36,7 +36,7 @@ Pré-requisitos: Docker Compose e, para carga, `k6` ou `hey`.
 cp .env.example .env
 # Os valores do exemplo são apenas para o laboratório.
 chmod +x scripts/*.sh
-docker compose up -d --build
+./scripts/up.sh
 ./scripts/smoke.sh
 ```
 

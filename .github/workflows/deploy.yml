@@ -72,6 +72,23 @@ jobs:
           done
 
           chmod +x scripts/*.sh
-          docker compose --profile zabbix up -d --build
+          export DOCKER_BUILDKIT=1
+          COMPOSE="docker compose --profile zabbix"
+
+          # Migração dos nomes antigos; volumes e dados permanecem intactos.
+          for old_container in checkout-db checkout-api checkout-nginx checkout-prometheus checkout-grafana checkout-loki checkout-promtail checkout-jaeger checkout-otel-collector checkout-zabbix-db checkout-zabbix-server checkout-zabbix-web checkout-zabbix-agent2; do
+            docker rm -f "$old_container" 2>/dev/null || true
+          done
+
+          # Sobe primeiro a infraestrutura que não depende da API.
+          $COMPOSE up -d --remove-orphans --no-build db zabbix-db jaeger loki prometheus promtail otel-collector
+
+          # A API é a única imagem local compilada e espera o banco saudável.
+          $COMPOSE up -d --build api
+
+          # Só depois inicia o proxy e as camadas que dependem da infraestrutura.
+          $COMPOSE up -d --remove-orphans --no-build nginx grafana zabbix-server zabbix-web zabbix-agent2
+
+          $COMPOSE ps
           ./scripts/smoke.sh
           REMOTE_SCRIPT

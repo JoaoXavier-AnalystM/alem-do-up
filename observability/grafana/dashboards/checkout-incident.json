@@ -8,6 +8,6 @@
     {"id": 2, "type": "timeseries", "title": "HTTP p95 (s)", "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}]},
     {"id": 3, "type": "timeseries", "title": "Pool: em uso / esperando / tamanho", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "targets": [{"expr": "checkout_db_pool_in_use", "legendFormat": "in_use"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "waiting"}, {"expr": "checkout_db_pool_size", "legendFormat": "size"}]},
     {"id": 4, "type": "timeseries", "title": "Erros de checkout", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "targets": [{"expr": "rate(checkout_errors_total[1m])", "legendFormat": "{{reason}}"}]},
-    {"id": 5, "type": "logs", "title": "Logs de pool", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}, "targets": [{"expr": "{container=\"up-but-not-healthy-api-1\"} |= \"pool\"", "refId": "A"}]}
+    {"id": 5, "type": "logs", "title": "Logs de pool", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}, "targets": [{"expr": "{container=\"api-up\"} |= \"pool\"", "refId": "A"}]}
   ]
 }
