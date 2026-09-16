@@ -45,6 +45,12 @@ services:
       OTEL_SERVICE_NAME: checkout-api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on: {db: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     expose: ["8000"]
     networks: [lab]
   nginx:
@@ -52,9 +58,9 @@ services:
     restart: unless-stopped
     <<: *hardening
     logging: *default-logging
-    ports: ["8080:80"]
+    ports: ["${APP_PORT:-5055}:80"]
     volumes: ["./demo/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"]
-    depends_on: [api]
+    depends_on: {api: {condition: service_healthy}}
     networks: [lab]
   prometheus:
     image: prom/prometheus:v3.1.0

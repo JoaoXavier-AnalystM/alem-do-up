@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.15.0rc2-alpine3.24
 WORKDIR /app
 RUN apk add --no-cache libstdc++ \
     && apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev

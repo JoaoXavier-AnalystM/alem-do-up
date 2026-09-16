@@ -51,7 +51,7 @@ docker compose up -d --build
 
 Observe durante o roteiro:
 
-- Aplicação: <http://localhost:8080>
+- Aplicação: <http://localhost:5055>
 - Grafana: <http://localhost:3000>
 - Prometheus: <http://localhost:9090>
 - Jaeger: <http://localhost:16686>

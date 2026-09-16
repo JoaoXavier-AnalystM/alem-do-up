@@ -2,7 +2,7 @@
 set -euo pipefail
 
 curl --fail-with-body -sS -X POST \
-  http://localhost:8080/demo/state \
+  http://localhost:5055/demo/state \
   -H 'Content-Type: application/json' \
   -d '{"mode":"normal"}'
 printf '\nEstado normal: pool livre, checkout rápido, /health 200\n'
