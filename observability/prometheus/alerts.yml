@@ -1,0 +1,13 @@
+groups:
+  - name: checkout-demo
+    rules:
+      - alert: CheckoutHighLatency
+        expr: histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path="/checkout"}[2m]))) > 1
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: "Checkout p95 acima de 1s"}
+      - alert: CheckoutPoolWaiting
+        expr: checkout_db_pool_waiting > 0
+        for: 15s
+        labels: {severity: warning}
+        annotations: {summary: "Requisições esperando por conexão"}
