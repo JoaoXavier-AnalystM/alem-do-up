@@ -74,7 +74,13 @@ jobs:
           test -n "$auth_password"
 
           mkdir -p "$STACK_DIR/data"
+          image="darks1d3r/opendockwatch:2.7.0"
           if [ ! -f "$STACK_DIR/config/hosts.json" ]; then
+            cp "$STACK_DIR/config/hosts.example.json" "$STACK_DIR/config/hosts.json"
+          elif ! docker run --rm \
+              -v "$STACK_DIR/config:/config:ro" \
+              "$image" node -e 'const fs=require("fs"); const value=JSON.parse(fs.readFileSync("/config/hosts.json", "utf8")); if (!Array.isArray(value)) process.exit(1);'; then
+            cp "$STACK_DIR/config/hosts.json" "$STACK_DIR/config/hosts.json.invalid-format.bak"
             cp "$STACK_DIR/config/hosts.example.json" "$STACK_DIR/config/hosts.json"
           fi
 
@@ -86,7 +92,6 @@ jobs:
             session_secret="$(openssl rand -hex 32)"
           fi
 
-          image="darks1d3r/opendockwatch:2.7.0"
           auth_hash="$(docker run --rm "$image" node scripts/hash-password.js "$auth_password")"
           umask 077
           cat > "$STACK_DIR/.env" <<EOF
@@ -102,7 +107,9 @@ jobs:
           mkdir -p data
           if [ ! -f config/hosts.json ]; then
             cp config/hosts.example.json config/hosts.json
-          elif grep -q '"hosts"' config/hosts.json; then
+          elif ! docker run --rm \
+              -v "$STACK_DIR/config:/config:ro" \
+              "$image" node -e 'const fs=require("fs"); const value=JSON.parse(fs.readFileSync("/config/hosts.json", "utf8")); if (!Array.isArray(value)) process.exit(1);'; then
             cp config/hosts.json config/hosts.json.invalid-format.bak
             cp config/hosts.example.json config/hosts.json
           fi

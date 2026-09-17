@@ -17,7 +17,10 @@ fi
 mkdir -p data
 if [ ! -f config/hosts.json ]; then
   cp config/hosts.example.json config/hosts.json
-elif grep -q '"hosts"' config/hosts.json; then
+elif ! docker run --rm \
+    -v "$ROOT_DIR/config:/config:ro" \
+    darks1d3r/opendockwatch:2.7.0 \
+    node -e 'const fs=require("fs"); const value=JSON.parse(fs.readFileSync("/config/hosts.json", "utf8")); if (!Array.isArray(value)) process.exit(1);'; then
   cp config/hosts.json config/hosts.json.invalid-format.bak
   cp config/hosts.example.json config/hosts.json
   echo "Formato antigo de config/hosts.json corrigido; backup salvo em config/hosts.json.invalid-format.bak."

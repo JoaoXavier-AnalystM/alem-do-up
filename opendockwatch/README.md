@@ -14,7 +14,11 @@ cp .env.example .env
 cp config/hosts.example.json config/hosts.json
 ```
 
-Gere o hash da senha administrativa sem instalar Node.js na VPS:
+No deploy principal, o OpenDockWatch reutiliza o usuário e a senha do Grafana
+definidos no `.env` da VPS. A Action gera o hash automaticamente e preserva o
+`SESSION_SECRET` entre os deploys.
+
+Para uma inicialização manual, gere o hash da senha sem instalar Node.js na VPS:
 
 ```bash
 docker run --rm darks1d3r/opendockwatch:2.7.0 node scripts/hash-password.js "SUA_SENHA"
