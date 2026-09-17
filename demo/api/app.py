@@ -4,10 +4,11 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import asyncpg
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
@@ -49,6 +50,8 @@ class DemoState:
 demo_state = DemoState()
 app = FastAPI(title="Checkout API — UP but not healthy")
 db_pool: asyncpg.Pool | None = None
+UI_PREFIX = os.getenv("APP_UI_PREFIX", "demo").strip("/") or "demo"
+UI_FILE = Path(__file__).parent / "ui" / "index.html"
 
 
 class DemoStateRequest(BaseModel):
@@ -76,6 +79,7 @@ def health_payload():
         "mode": demo_state.mode,
         "pool_in_use": demo_state.pool_in_use,
         "pool_size": demo_state.pool_size,
+        "waiting": demo_state.waiting,
         "message": "basic process health; business latency may still be degraded" if not degraded else "pool capacity exhausted",
     }
 
@@ -124,6 +128,11 @@ async def metrics():
     POOL_WAITING.set(demo_state.waiting)
     INCIDENT.set(1 if demo_state.mode == "incident" else 0)
     return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@app.get(f"/{UI_PREFIX}", include_in_schema=False)
+async def presentation_ui():
+    return FileResponse(UI_FILE)
 
 
 @app.post("/demo/state")
@@ -190,4 +199,4 @@ async def checkout():
 
 @app.get("/")
 async def root():
-    return {"service": "checkout-api", "links": ["/health", "/metrics", "/checkout"]}
+    return {"service": "checkout-api", "links": ["/health", "/metrics", "/checkout", f"/{UI_PREFIX}"]}

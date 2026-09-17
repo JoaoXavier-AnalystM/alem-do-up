@@ -3,6 +3,9 @@ name: Deploy to VPS
 on:
   push:
     branches: [master, main]
+    paths-ignore:
+      - "opendockwatch/**"
+      - ".github/workflows/deploy-stack.yml"
   workflow_dispatch:
 
 permissions:

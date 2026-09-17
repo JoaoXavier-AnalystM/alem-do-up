@@ -50,13 +50,18 @@ chmod +x scripts/*.sh
 ./scripts/recover.sh
 ```
 
-Observe durante o roteiro:
+Observe durante o roteiro. A interface de apresentação concentra os controles e
+os indicadores em uma tela:
 
-- Aplicação: <http://localhost:5055>
+- Interface da aplicação: <http://localhost:5055/demo>
+- API: <http://localhost:5055>
 - Grafana: <http://localhost:3030>
 - Prometheus: <http://localhost:9090>
 - Jaeger: <http://localhost:16686>
 - OpenDockWatch separado: <http://localhost:3001>
+
+O caminho da interface é definido por `APP_UI_PREFIX` no `.env` e usa `demo`
+por enquanto. Assim, ele poderá virar `porteira-tech` sem alterar a aplicação.
 
 O OpenDockWatch possui Compose, configuração e ciclo de vida próprios em
 [opendockwatch/](opendockwatch/). Ele não é iniciado pelo stack principal.

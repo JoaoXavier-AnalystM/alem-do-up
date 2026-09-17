@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout API · laboratório</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0b1020; --panel: #131b31; --line: #283552; --text: #edf2ff; --muted: #9ba9c7; --green: #55d98b; --yellow: #f8c85d; --red: #ff7185; --blue: #78a9ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font: 15px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; color: var(--text); background: radial-gradient(circle at top right, #1a2c55 0, transparent 38%), var(--bg); }
+    main { max-width: 1180px; margin: auto; padding: 34px 20px 48px; }
+    header { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 28px; }
+    h1 { margin: 5px 0 8px; font-size: clamp(26px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.05; }
+    h2 { margin: 0 0 4px; font-size: 18px; } p { margin: 0; color: var(--muted); }
+    .eyebrow { color: var(--blue); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    .badge { border: 1px solid var(--line); background: #17223c; border-radius: 99px; padding: 9px 14px; white-space: nowrap; font-weight: 700; }
+    .badge.ok { color: var(--green); } .badge.warn { color: var(--yellow); } .badge.bad { color: var(--red); }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .panel { border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); border-radius: 14px; padding: 19px; box-shadow: 0 12px 30px #0002; }
+    .metric { min-height: 122px; } .metric .value { margin-top: 14px; font-size: 30px; font-weight: 750; } .metric small { color: var(--muted); }
+    .wide { grid-column: span 2; } .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button, a { border: 0; border-radius: 9px; padding: 10px 14px; color: var(--text); background: #253555; font: inherit; cursor: pointer; text-decoration: none; }
+    button:hover, a:hover { filter: brightness(1.18); } button.primary { background: #2865c8; } button.danger { background: #86394e; } button:disabled { opacity: .55; cursor: wait; }
+    .links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; } .links a { color: #cbdcff; background: #1b2948; }
+    #activity { min-height: 170px; max-height: 230px; overflow: auto; margin-top: 14px; padding: 12px; border-radius: 9px; background: #0a0f1d; color: #b9c7e3; font: 12px/1.7 ui-monospace, monospace; white-space: pre-wrap; }
+    .hint { margin-top: 10px; font-size: 13px; } .status-green { color: var(--green); } .status-yellow { color: var(--yellow); } .status-red { color: var(--red); }
+    @media (max-width: 780px) { header { flex-direction: column; } .grid { grid-template-columns: repeat(2, 1fr); } .wide { grid-column: span 2; } }
+    @media (max-width: 480px) { main { padding: 24px 14px; } .grid { grid-template-columns: 1fr; } .wide { grid-column: span 1; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><div class="eyebrow">Laboratório de observabilidade</div><h1>UP não é o mesmo que saudável.</h1><p>Interaja com o checkout e veja a saúde real do sistema mudar em tempo real.</p></div>
+      <div id="mode" class="badge">carregando…</div>
+    </header>
+    <section class="grid">
+      <article class="panel metric"><p>Health endpoint</p><div id="health" class="value">—</div><small id="health-detail">aguardando leitura</small></article>
+      <article class="panel metric"><p>Checkout</p><div id="checkout" class="value">—</div><small id="checkout-detail">última chamada</small></article>
+      <article class="panel metric"><p>Latência</p><div id="latency" class="value">—</div><small>última resposta do checkout</small></article>
+      <article class="panel metric"><p>Erros</p><div id="errors" class="value">0</div><small>pool esgotado</small></article>
+      <article class="panel wide"><h2>Controle da demonstração</h2><p>Comece normal, provoque o incidente e observe o pool ficar saturado.</p><div class="actions"><button class="primary" data-action="normal">Voltar ao normal</button><button class="danger" data-action="incident">Provocar incidente</button><button data-action="load">Gerar carga no pool</button></div><p class="hint">A carga usa requisições controladas e pode retornar 503 quando todas as conexões estiverem ocupadas.</p></article>
+      <article class="panel wide"><h2>Pool de conexões</h2><p id="pool">em uso — · esperando — · tamanho —</p><div class="links"><a id="grafana" target="_blank" rel="noreferrer">Abrir Grafana</a><a id="jaeger" target="_blank" rel="noreferrer">Abrir Jaeger</a><a id="watch" target="_blank" rel="noreferrer">Abrir OpenDockWatch</a></div></article>
+      <article class="panel wide"><h2>Atividade da apresentação</h2><p>Eventos desta sessão do navegador.</p><div id="activity">Aguardando os primeiros eventos…</div></article>
+    </section>
+  </main>
+  <script>
+    const base = window.location.origin, api = `${base}`, activity = document.querySelector('#activity');
+    const $ = (id) => document.querySelector(id);
+    const log = (message) => { const line = `[${new Date().toLocaleTimeString('pt-BR')}] ${message}`; activity.textContent = activity.textContent.includes('Aguardando') ? line : `${line}\n${activity.textContent}`; };
+    const setMode = (mode) => { const el = $('#mode'); el.textContent = mode === 'incident' ? 'INCIDENTE ATIVO' : 'SISTEMA NORMAL'; el.className = `badge ${mode === 'incident' ? 'warn' : 'ok'}`; };
+    async function readHealth() { try { const response = await fetch(`${api}/health`); const data = await response.json(); $('#health').textContent = data.status === 'ok' ? 'OK' : 'DEGRADADO'; $('#health').className = `value ${data.status === 'ok' ? 'status-green' : 'status-red'}`; $('#health-detail').textContent = data.message; setMode(data.mode); $('#pool').textContent = `em uso ${data.pool_in_use} · esperando ${data.waiting ?? '—'} · tamanho ${data.pool_size}`; } catch (error) { $('#health').textContent = 'OFFLINE'; $('#health').className = 'value status-red'; log(`health falhou: ${error.message}`); } }
+    async function readMetrics() { try { const text = await (await fetch(`${api}/metrics`)).text(); const match = text.match(/checkout_errors_total\{reason="pool_exhausted"\}\s+([\d.]+)/); $('#errors').textContent = match ? match[1] : '0'; } catch (_) {} }
+    async function checkCheckout() { const started = performance.now(); try { const response = await fetch(`${api}/checkout`); const data = await response.json(); const elapsed = Math.round(performance.now() - started); $('#checkout').textContent = response.ok ? 'OK' : '503'; $('#checkout').className = `value ${response.ok ? 'status-green' : 'status-red'}`; $('#checkout-detail').textContent = `${data.mode || 'incidente'} · ${elapsed} ms`; $('#latency').textContent = `${elapsed} ms`; log(`checkout ${response.status} · ${elapsed} ms`); } catch (error) { log(`checkout falhou: ${error.message}`); } }
+    async function state(mode) { const button = document.querySelector(`[data-action="${mode}"]`); button.disabled = true; try { await fetch(`${api}/demo/state`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({mode}) }); log(`modo alterado para ${mode}`); await readHealth(); } finally { button.disabled = false; } }
+    async function load() { const button = document.querySelector('[data-action="load"]'); button.disabled = true; try { await state('incident'); const count = 8; log(`gerando ${count} requisições concorrentes`); await Promise.all(Array.from({length: count}, () => fetch(`${api}/demo/hold`, {method:'POST'}))); await readHealth(); await readMetrics(); log('carga concluída; confira o pool e os logs'); } finally { button.disabled = false; } }
+    document.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => button.dataset.action === 'load' ? load() : state(button.dataset.action)));
+    const host = window.location.hostname; $('#grafana').href = `http://${host}:3030`; $('#jaeger').href = `http://${host}:16686`; $('#watch').href = `http://${host}:3001`;
+    readHealth(); readMetrics(); checkCheckout(); setInterval(() => { readHealth(); readMetrics(); }, 3000);
+  </script>
+</body>
+</html>
