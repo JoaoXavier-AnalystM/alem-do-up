@@ -1,13 +1,115 @@
 {
-  "title": "Checkout — UP mas não saudável",
+  "uid": "checkout-incident",
+  "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+  "title": "Checkout — disponibilidade não é saúde",
+  "description": "Dashboard de demonstração: o scrape continua disponível enquanto latência, erros e pool degradam o checkout.",
+  "tags": ["checkout", "incident", "prometheus", "grafana-gapit"],
+  "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
+  "time": {"from": "now-30m", "to": "now"},
+  "timepicker": {"refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]},
+  "templating": {"list": []},
+  "annotations": {"list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": true, "hide": true, "iconColor": "#5794F2", "name": "Annotations & Alerts", "type": "dashboard"}]},
   "panels": [
-    {"id": 1, "type": "stat", "title": "Health endpoint", "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}, "targets": [{"expr": "up{job=\"checkout-api\"}", "legendFormat": "API scrape"}]},
-    {"id": 2, "type": "timeseries", "title": "HTTP p95 (s)", "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}]},
-    {"id": 3, "type": "timeseries", "title": "Pool: em uso / esperando / tamanho", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "targets": [{"expr": "checkout_db_pool_in_use", "legendFormat": "in_use"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "waiting"}, {"expr": "checkout_db_pool_size", "legendFormat": "size"}]},
-    {"id": 4, "type": "timeseries", "title": "Erros de checkout", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "targets": [{"expr": "rate(checkout_errors_total[1m])", "legendFormat": "{{reason}}"}]},
-    {"id": 5, "type": "logs", "title": "Logs de pool", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}, "targets": [{"expr": "{container=\"api-up\"} |= \"pool\"", "refId": "A", "datasource": {"type": "loki", "uid": "loki"}}]}
+    {
+      "id": 1,
+      "type": "gapit-htmlgraphics-panel",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "title": "Sinal operacional",
+      "description": "Disponibilidade técnica versus saúde percebida pelo usuário.",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "add100Percentage": true,
+        "centerAlignContent": false,
+        "overflow": "hidden",
+        "SVGBaseFix": false,
+        "codeData": "{\"thresholds\":{\"p95Warning\":1,\"p95Critical\":2,\"successWarning\":95}}",
+        "html": "<div class=\"ops-card\"><div class=\"ops-head\"><div><div class=\"eyebrow\">CHECKOUT / INCIDENT VIEW</div><h2>Disponível ≠ saudável</h2><p id=\"summary\">Carregando sinais da aplicação…</p></div><div id=\"overall\" class=\"status-pill\"><span class=\"dot\"></span><span class=\"status-text\">AGUARDANDO</span></div></div><div class=\"metric-grid\"><div class=\"metric\"><span class=\"metric-label\">API scrape</span><strong class=\"metric-value\" id=\"up-value\">—</strong><span class=\"metric-detail\">Prometheus</span></div><div class=\"metric\"><span class=\"metric-label\">Checkout p95</span><strong class=\"metric-value\" id=\"p95-value\">—</strong><span class=\"metric-detail\">limite: 1,0 s</span></div><div class=\"metric\"><span class=\"metric-label\">Pool esperando</span><strong class=\"metric-value\" id=\"pool-value\">—</strong><span class=\"metric-detail\">requisições</span></div><div class=\"metric\"><span class=\"metric-label\">Checkout sucesso</span><strong class=\"metric-value\" id=\"success-value\">—</strong><span class=\"metric-detail\">último minuto</span></div><div class=\"metric\"><span class=\"metric-label\">Erros</span><strong class=\"metric-value\" id=\"errors-value\">—</strong><span class=\"metric-detail\">por segundo</span></div></div><div class=\"ops-foot\"><span class=\"foot-marker\"></span><span id=\"updated\">Atualização automática a cada 5 s</span><span class=\"legend\"><i class=\"green\"></i> normal <i class=\"amber\"></i> degradado <i class=\"red\"></i> incidente</span></div></div>",
+        "css": ":host{display:block;height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.ops-card{height:100%;box-sizing:border-box;padding:20px 24px;background:linear-gradient(135deg,var(--panel-bg),var(--panel-bg-2));color:var(--text);border:1px solid var(--border);border-radius:12px;overflow:hidden}.ops-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.eyebrow{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.16em}h2{margin:5px 0 3px;font-size:22px;letter-spacing:-.03em}p{margin:0;color:var(--muted);font-size:12px}.status-pill{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-size:10px;font-weight:800;letter-spacing:.08em;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}.metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:18px}.metric{min-width:0;padding:13px 14px;border:1px solid var(--border);border-top:2px solid var(--accent);border-radius:8px;background:var(--card-bg)}.metric-label{display:block;color:var(--muted);font-size:11px;font-weight:600}.metric-value{display:block;margin-top:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:25px;letter-spacing:-.04em}.metric-detail{display:block;margin-top:4px;color:var(--muted);font-size:10px}.ops-foot{display:flex;align-items:center;gap:7px;margin-top:14px;color:var(--muted);font-size:10px}.foot-marker{width:6px;height:6px;border-radius:50%;background:var(--accent)}.legend{margin-left:auto;display:flex;align-items:center;gap:5px}.legend i{width:6px;height:6px;border-radius:50%;display:inline-block;margin-left:4px}.green{background:#24b581}.amber{background:#ffc857}.red{background:#ff5c67}@media(max-width:800px){.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.metric:nth-child(4),.metric:nth-child(5){display:none}.legend{display:none}}",
+        "onInit": "const root=htmlNode.querySelector('.ops-card');htmlNode._checkoutRefs={summary:htmlNode.querySelector('#summary'),overall:htmlNode.querySelector('#overall'),status:htmlNode.querySelector('.status-text'),dot:htmlNode.querySelector('.dot'),updated:htmlNode.querySelector('#updated'),up:htmlNode.querySelector('#up-value'),p95:htmlNode.querySelector('#p95-value'),pool:htmlNode.querySelector('#pool-value'),success:htmlNode.querySelector('#success-value'),errors:htmlNode.querySelector('#errors-value')};function applyTheme(){const dark=theme?.isDark!==false;root.style.setProperty('--panel-bg',dark?'#10151d':'#fff');root.style.setProperty('--panel-bg-2',dark?'#151c27':'#f7f9fc');root.style.setProperty('--card-bg',dark?'#161d27':'#f1f4f8');root.style.setProperty('--text',dark?'#f2f4f7':'#182230');root.style.setProperty('--muted',dark?'#8b98aa':'#687586');root.style.setProperty('--border',dark?'#273241':'#dbe2ea');root.style.setProperty('--accent',dark?'#5794f2':'#3274d9')}applyTheme();htmlNode.addEventListener('panelupdate',applyTheme);",
+        "onRender": "const refs=htmlNode._checkoutRefs;if(!refs)return;function last(ref){const s=data?.series?.find(x=>x.refId===ref);const f=s?.fields?.find(x=>x.type==='number')||s?.fields?.[1];if(!f)return null;if(f.state?.calcs?.last!==undefined)return Number(f.state.calcs.last);const v=f.values||[];for(let i=v.length-1;i>=0;i--)if(v[i]!==null&&v[i]!==undefined)return Number(v[i]);return null}function fmt(v,d=1){return v===null||Number.isNaN(v)?'—':v.toFixed(d)}const up=last('A'),p95=last('B'),waiting=last('C'),rawSuccess=last('D'),errors=last('E'),traffic=last('F');const hasTraffic=traffic!==null&&traffic>0;const success=hasTraffic?rawSuccess:null;refs.up.textContent=up===null?'—':(up>=1?'UP':'DOWN');refs.up.style.color=up===1?'#24b581':'#ff5c67';refs.p95.textContent=p95===null?'—':fmt(p95,2)+' s';refs.pool.textContent=waiting===null?'—':fmt(waiting,0);refs.success.textContent=success===null?'—':fmt(success,1)+'%';refs.errors.textContent=errors===null?'—':fmt(errors,2);const incident=up!==1||(waiting!==null&&waiting>0)||(p95!==null&&p95>=2)||(hasTraffic&&success!==null&&success<95);const degraded=!incident&&((p95!==null&&p95>=1)||(hasTraffic&&success!==null&&success<99));const state=incident?'INCIDENTE':degraded?'DEGRADADO':'SAUDÁVEL';const color=incident?'#ff5c67':degraded?'#ffc857':'#24b581';refs.status.textContent=state;refs.overall.style.color=color;refs.overall.style.borderColor=color;refs.dot.style.background=color;refs.summary.textContent=incident?'A API responde, mas o caminho de checkout está comprometido.':degraded?'Os primeiros sinais de saturação apareceram no caminho de checkout.':hasTraffic?'Scrape, latência e pool estão dentro do esperado.':'API disponível; aguardando tráfego de checkout para calcular p95 e sucesso.';refs.updated.textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR')+' · janela de 1 min';refs.p95.style.color='';refs.pool.style.color='';refs.success.style.color='';refs.errors.style.color='';if(p95!==null&&p95>=1)refs.p95.style.color=p95>=2?'#ff5c67':'#ffc857';if(waiting!==null&&waiting>0)refs.pool.style.color='#ffc857';if(hasTraffic&&success!==null&&success<95)refs.success.style.color='#ff5c67';if(errors!==null&&errors>0)refs.errors.style.color='#ff5c67';",
+        "rootCSS": "",
+        "dynamicHtmlGraphics": true,
+        "dynamicData": true,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "panelupdateOnMount": true,
+        "renderOnMount": true
+      },
+      "targets": [
+        {"refId": "A", "expr": "up{job=\"checkout-api\"}", "legendFormat": "API scrape"},
+        {"refId": "B", "expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"},
+        {"refId": "C", "expr": "checkout_db_pool_waiting", "legendFormat": "waiting"},
+        {"refId": "D", "expr": "100 * sum(rate(checkout_http_requests_total{path=\"/checkout\",status=~\"2..\"}[1m])) / clamp_min(sum(rate(checkout_http_requests_total{path=\"/checkout\"}[1m])), 0.001)", "legendFormat": "success"},
+        {"refId": "E", "expr": "sum(rate(checkout_errors_total[1m]))", "legendFormat": "errors"},
+        {"refId": "F", "expr": "sum(rate(checkout_http_requests_total{path=\"/checkout\"}[1m]))", "legendFormat": "traffic"}
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "title": "Latência do checkout",
+      "description": "P95 do endpoint /checkout. O alerta de referência dispara acima de 1 s.",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "targets": [{"refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}],
+      "fieldConfig": {"defaults": {"unit": "s", "decimals": 2, "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 2}]}}, "overrides": []},
+      "options": {"legend": {"displayMode": "hidden"}, "tooltip": {"mode": "single"}}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "title": "Saturação do pool PostgreSQL",
+      "description": "Conexões em uso, requisições esperando e capacidade configurada.",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "targets": [{"refId": "A", "expr": "checkout_db_pool_in_use", "legendFormat": "em uso"}, {"refId": "B", "expr": "checkout_db_pool_waiting", "legendFormat": "esperando"}, {"refId": "C", "expr": "checkout_db_pool_size", "legendFormat": "tamanho"}],
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0}, "overrides": [{"matcher": {"id": "byName", "options": "esperando"}, "properties": [{"id": "color", "value": {"fixedColor": "#FF5C67", "mode": "fixed"}}]}, {"matcher": {"id": "byName", "options": "tamanho"}, "properties": [{"id": "color", "value": {"fixedColor": "#5794F2", "mode": "fixed"}}]}]},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "title": "Falhas e tráfego do checkout",
+      "description": "Taxa de erros e volume de requisições no mesmo período.",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "targets": [{"refId": "A", "expr": "sum by (reason) (rate(checkout_errors_total[1m]))", "legendFormat": "erro: {{reason}}"}, {"refId": "B", "expr": "sum(rate(checkout_http_requests_total{path=\"/checkout\"}[1m]))", "legendFormat": "requisições/s"}],
+      "fieldConfig": {"defaults": {"unit": "reqps", "decimals": 2}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "Logs da aplicação",
+      "description": "Todos os eventos emitidos pelo checkout-api.",
+      "gridPos": {"h": 10, "w": 8, "x": 0, "y": 16},
+      "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+      "targets": [{"refId": "A", "expr": "{container=\"api-up\"}"}],
+      "options": {"showTime": true, "sortOrder": "Descending", "wrapLines": true, "prettifyLogMessage": true, "enableLogDetails": true, "deduplication": "none"}
+    },
+    {
+      "id": 6,
+      "type": "logs",
+      "title": "Pool e banco",
+      "description": "Espera, exaustão e mudanças no pool de conexões.",
+      "gridPos": {"h": 10, "w": 8, "x": 8, "y": 16},
+      "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+      "targets": [{"refId": "A", "expr": "{container=\"api-up\"} |~ \"pool|database_waiting|db_pool\""}],
+      "options": {"showTime": true, "sortOrder": "Descending", "wrapLines": true, "prettifyLogMessage": true, "enableLogDetails": true, "deduplication": "none"}
+    },
+    {
+      "id": 7,
+      "type": "logs",
+      "title": "Checkout e erros",
+      "description": "Eventos do fluxo de checkout e falhas da aplicação.",
+      "gridPos": {"h": 10, "w": 8, "x": 16, "y": 16},
+      "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+      "targets": [{"refId": "A", "expr": "{container=\"api-up\"} |~ \"checkout|failed|error\""}],
+      "options": {"showTime": true, "sortOrder": "Descending", "wrapLines": true, "prettifyLogMessage": true, "enableLogDetails": true, "deduplication": "none"}
+    }
   ]
 }

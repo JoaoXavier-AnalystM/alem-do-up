@@ -12,6 +12,9 @@ API="https://api.cloudflare.com/client/v4"
 CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
 APP_HOST="aplicacao-ps.${CLOUDFLARE_DOMAIN}"
 GRAFANA_HOST="grafana-ps.${CLOUDFLARE_DOMAIN}"
+ZABBIX_HOST="zabbix-ps.${CLOUDFLARE_DOMAIN}"
+JAEGER_HOST="jaeger-ps.${CLOUDFLARE_DOMAIN}"
+OPENDOCK_HOST="opendock-ps.${CLOUDFLARE_DOMAIN}"
 TUNNEL_TARGET="${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com"
 
 cf() {
@@ -27,18 +30,24 @@ if ! printf '%s' "$token_check" | jq -e '.success == true' >/dev/null; then
   exit 1
 fi
 
-echo "Atualizando rotas do Tunnel para ${APP_HOST} e ${GRAFANA_HOST}"
+echo "Atualizando rotas do Tunnel para aplicacao, Grafana, Zabbix, Jaeger e OpenDockWatch"
 
 current_config="$(cf "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/cfd_tunnel/${CLOUDFLARE_TUNNEL_ID}/configurations")"
 config_payload="$(printf '%s' "$current_config" | jq \
   --arg app_host "$APP_HOST" \
   --arg grafana_host "$GRAFANA_HOST" \
+  --arg zabbix_host "$ZABBIX_HOST" \
+  --arg jaeger_host "$JAEGER_HOST" \
+  --arg opendock_host "$OPENDOCK_HOST" \
   --arg origin_host "$CLOUDFLARE_ORIGIN_HOST" \
   '.result.config.ingress // []
-   | map(select(.hostname != $app_host and .hostname != $grafana_host and .service != "http_status:404"))
+   | map(select(.hostname != $app_host and .hostname != $grafana_host and .hostname != $zabbix_host and .hostname != $jaeger_host and .hostname != $opendock_host and .service != "http_status:404"))
    | . + [
        {"hostname": $app_host, "service": ("http://" + $origin_host + ":5055")},
        {"hostname": $grafana_host, "service": ("http://" + $origin_host + ":3030")},
+       {"hostname": $zabbix_host, "service": ("http://" + $origin_host + ":8081")},
+       {"hostname": $jaeger_host, "service": ("http://" + $origin_host + ":16686")},
+       {"hostname": $opendock_host, "service": ("http://" + $origin_host + ":3001")},
        {"service": "http_status:404"}
      ]
    | {"config": {"ingress": .}}')"
@@ -72,4 +81,7 @@ upsert_cname() {
 
 upsert_cname "$APP_HOST"
 upsert_cname "$GRAFANA_HOST"
+upsert_cname "$ZABBIX_HOST"
+upsert_cname "$JAEGER_HOST"
+upsert_cname "$OPENDOCK_HOST"
 echo "Rotas Cloudflare publicadas com sucesso"

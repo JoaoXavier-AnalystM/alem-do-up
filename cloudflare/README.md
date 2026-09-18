@@ -47,5 +47,8 @@ O workflow cria automaticamente:
 
 - `aplicacao-ps.<CLOUDFLARE_DOMAIN>` → API/interface na porta `5055`;
 - `grafana-ps.<CLOUDFLARE_DOMAIN>` → Grafana na porta `3030`.
+- `zabbix-ps.<CLOUDFLARE_DOMAIN>` → Zabbix Web na porta `8081`;
+- `jaeger-ps.<CLOUDFLARE_DOMAIN>` → Jaeger na porta `16686`;
+- `opendock-ps.<CLOUDFLARE_DOMAIN>` → OpenDockWatch na porta `3001`.
 
 Os CNAMEs apontam para `<CLOUDFLARE_TUNNEL_ID>.cfargotunnel.com`.
