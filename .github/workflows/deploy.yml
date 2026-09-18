@@ -109,7 +109,7 @@ jobs:
           $COMPOSE up -d --remove-orphans --no-build zabbix-db jaeger loki prometheus promtail otel-collector
 
           # Por último inicia o proxy e as interfaces que dependem da stack.
-          $COMPOSE up -d --remove-orphans --no-build nginx grafana zabbix-server zabbix-web zabbix-agent2
+          $COMPOSE up -d --remove-orphans --build nginx grafana zabbix-server zabbix-web zabbix-agent2
 
           $COMPOSE ps
           ./scripts/smoke.sh

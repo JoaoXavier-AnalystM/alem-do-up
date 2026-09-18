@@ -76,7 +76,13 @@ services:
     networks: [lab]
   grafana:
     container_name: grafana
-    image: grafana/grafana-oss:12.3.1-security-01
+    image: up-but-not-healthy-grafana:12.3.1
+    build:
+      context: ./observability/grafana
+      cache_from:
+        - type=local,src=/tmp/up-but-not-healthy-grafana-cache
+      cache_to:
+        - type=local,dest=/tmp/up-but-not-healthy-grafana-cache,mode=max
     restart: unless-stopped
     <<: *hardening
     logging: *default-logging
@@ -88,7 +94,6 @@ services:
       GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-localhost}
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3030/}
       GF_SECURITY_COOKIE_SECURE: ${GRAFANA_COOKIE_SECURE:-false}
-      GF_PLUGINS_PREINSTALL_SYNC: alexanderzobnin-zabbix-app@6.0.3,gapit-htmlgraphics-panel@2.2.3
       APP_DB_NAME: ${APP_DB_NAME}
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
