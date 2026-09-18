@@ -199,4 +199,9 @@ async def checkout():
 
 @app.get("/")
 async def root():
+    return FileResponse(UI_FILE)
+
+
+@app.get("/checkout-api")
+async def api_root():
     return {"service": "checkout-api", "links": ["/health", "/metrics", "/checkout", f"/{UI_PREFIX}"]}
