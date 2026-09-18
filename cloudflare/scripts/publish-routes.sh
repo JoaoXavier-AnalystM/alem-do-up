@@ -8,6 +8,7 @@ set -euo pipefail
 : "${CLOUDFLARE_DOMAIN:?CLOUDFLARE_DOMAIN is required}"
 
 API="https://api.cloudflare.com/client/v4"
+CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
 APP_HOST="aplicacao-ps.${CLOUDFLARE_DOMAIN}"
 GRAFANA_HOST="grafana-ps.${CLOUDFLARE_DOMAIN}"
 TUNNEL_TARGET="${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com"
@@ -18,6 +19,12 @@ cf() {
     -H "Content-Type: application/json" \
     "$@"
 }
+
+token_check="$(cf "${API}/user/tokens/verify" || true)"
+if ! printf '%s' "$token_check" | jq -e '.success == true' >/dev/null; then
+  echo "CLOUDFLARE_API_TOKEN rejeitado. Use o token da API do Cloudflare, nao o token do Tunnel." >&2
+  exit 1
+fi
 
 echo "Atualizando rotas do Tunnel para ${APP_HOST} e ${GRAFANA_HOST}"
 

@@ -73,7 +73,7 @@ jobs:
             printf '%s' "$CLOUDFLARE_TUNNEL_TOKEN"
             printf '\n'
           } | ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
-            "umask 077; cat > '$VPS_APP_DIR/cloudflare/.env'"
+            "umask 077; if [ -w '$VPS_APP_DIR/cloudflare' ] || [ -w '$VPS_APP_DIR/cloudflare/.env' ]; then cat > '$VPS_APP_DIR/cloudflare/.env'; chmod 600 '$VPS_APP_DIR/cloudflare/.env'; else sudo -n tee '$VPS_APP_DIR/cloudflare/.env' >/dev/null && sudo -n chown \"\$(id -u):\$(id -g)\" '$VPS_APP_DIR/cloudflare/.env' && sudo -n chmod 600 '$VPS_APP_DIR/cloudflare/.env'; fi"
 
           ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
             "cd '$VPS_APP_DIR/cloudflare' && docker compose pull && docker compose up -d --remove-orphans && docker compose ps"
