@@ -41,6 +41,7 @@ Para o cadastro automático de DNS e rotas, serão adicionados depois:
 - `CLOUDFLARE_TUNNEL_ID`
 - `CLOUDFLARE_ZONE_ID`
 - `CLOUDFLARE_DOMAIN`
+- `CLOUDFLARE_ORIGIN_HOST`
 
 O workflow cria automaticamente:
 
