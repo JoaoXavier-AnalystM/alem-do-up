@@ -5,7 +5,9 @@ on:
     branches: [master, main]
     paths-ignore:
       - "opendockwatch/**"
+      - "cloudflare/**"
       - ".github/workflows/deploy-stack.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
   workflow_dispatch:
 
 permissions:
