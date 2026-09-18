@@ -6,6 +6,7 @@ set -euo pipefail
 : "${CLOUDFLARE_TUNNEL_ID:?CLOUDFLARE_TUNNEL_ID is required}"
 : "${CLOUDFLARE_ZONE_ID:?CLOUDFLARE_ZONE_ID is required}"
 : "${CLOUDFLARE_DOMAIN:?CLOUDFLARE_DOMAIN is required}"
+: "${CLOUDFLARE_ORIGIN_HOST:?CLOUDFLARE_ORIGIN_HOST is required}"
 
 API="https://api.cloudflare.com/client/v4"
 CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
@@ -32,11 +33,12 @@ current_config="$(cf "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/cfd_tunnel/${CLOU
 config_payload="$(printf '%s' "$current_config" | jq \
   --arg app_host "$APP_HOST" \
   --arg grafana_host "$GRAFANA_HOST" \
+  --arg origin_host "$CLOUDFLARE_ORIGIN_HOST" \
   '.result.config.ingress // []
    | map(select(.hostname != $app_host and .hostname != $grafana_host and .service != "http_status:404"))
    | . + [
-       {"hostname": $app_host, "service": "http://localhost:5055"},
-       {"hostname": $grafana_host, "service": "http://localhost:3030"},
+       {"hostname": $app_host, "service": ("http://" + $origin_host + ":5055")},
+       {"hostname": $grafana_host, "service": ("http://" + $origin_host + ":3030")},
        {"service": "http_status:404"}
      ]
    | {"config": {"ingress": .}}')"

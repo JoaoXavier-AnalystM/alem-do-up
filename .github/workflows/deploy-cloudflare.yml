@@ -27,6 +27,7 @@ jobs:
       CLOUDFLARE_TUNNEL_ID: ${{ secrets.CLOUDFLARE_TUNNEL_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_DOMAIN: ${{ secrets.CLOUDFLARE_DOMAIN }}
+      CLOUDFLARE_ORIGIN_HOST: ${{ secrets.CLOUDFLARE_ORIGIN_HOST }}
 
     steps:
       - name: Checkout
@@ -47,6 +48,7 @@ jobs:
           test -n "$CLOUDFLARE_TUNNEL_ID"
           test -n "$CLOUDFLARE_ZONE_ID"
           test -n "$CLOUDFLARE_DOMAIN"
+          test -n "$CLOUDFLARE_ORIGIN_HOST"
 
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/deploy_key"
