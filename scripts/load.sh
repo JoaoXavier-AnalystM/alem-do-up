@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+BASE_URL="${BASE_URL:-http://localhost:5055}"
 
 if command -v k6 >/dev/null 2>&1; then
-  exec k6 run load/k6.js
+  exec env BASE_URL="$BASE_URL" k6 run load/k6.js
+fi
+
+if command -v docker >/dev/null 2>&1; then
+  exec docker run --rm --network host -e BASE_URL="$BASE_URL" -i grafana/k6 run - < load/k6.js
 fi
 
 if command -v hey >/dev/null 2>&1; then
