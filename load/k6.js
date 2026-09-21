@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-export const options = { vus: 8, duration: '60s', tags: { testid: __ENV.K6_TEST_ID || 'checkout-load' }, thresholds: { http_req_duration: ['p(95)<10000'] } };
+export const options = { vus: Number(__ENV.K6_VUS || 8), duration: __ENV.K6_DURATION || '60s', tags: { testid: __ENV.K6_TEST_ID || 'checkout-load' }, thresholds: { http_req_duration: ['p(95)<10000'] } };
 const baseUrl = __ENV.BASE_URL || 'http://localhost:5055';
 export default function () {
   const res = http.get(`${baseUrl}/checkout`);
