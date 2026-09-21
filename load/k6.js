@@ -9,6 +9,6 @@ export function setup() {
 }
 export default function () {
   const res = http.get(`${baseUrl}/checkout`);
-  check(res, { 'checkout responded': r => [200, 503].includes(r.status) });
+  check(res, { 'checkout succeeded': r => r.status === 200 });
   sleep(0.2);
 }

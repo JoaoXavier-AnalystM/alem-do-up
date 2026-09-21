@@ -27,7 +27,8 @@ for attempt in $(seq 1 30); do
 done
 
 # Fase 2: sobe monitoramento, observabilidade e Zabbix.
-$COMPOSE up -d --remove-orphans --no-build zabbix-db jaeger loki prometheus promtail otel-collector
+$COMPOSE up -d --remove-orphans --no-build zabbix-db jaeger loki prometheus promtail
+$COMPOSE up -d --force-recreate --no-build otel-collector
 
 # Por último inicia o proxy e as interfaces.
 $COMPOSE up -d --remove-orphans --no-build nginx grafana zabbix-server zabbix-web zabbix-agent2

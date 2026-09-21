@@ -36,6 +36,19 @@ Na VPS, execute:
 K6_INCIDENT=true K6_VUS=50 K6_DURATION=5m K6_TEST_ID=checkout-heavy ./scripts/load.sh
 ```
 
+Esse comando usa `localhost:5055` e mede principalmente a aplicacao, sem atravessar o Cloudflare.
+Como a VPS esta na OCI em Ashburn, a latencia vista pelo navegador no Brasil pode ser maior.
+Para medir a experiencia real pelo DNS publico, execute uma segunda rodada:
+
+```bash
+BASE_URL=https://aplicacao-ps.joaoxavier.app.br \
+K6_INCIDENT=true K6_VUS=20 K6_DURATION=2m K6_TEST_ID=checkout-public \
+./scripts/load.sh
+```
+
+Compare a variacao entre as rodadas, e nao apenas o valor absoluto. A primeira isola a aplicacao;
+a segunda representa a jornada do usuario atraves do Cloudflare e da rede ate Ashburn.
+
 Confirme no terminal:
 
 - 50 VUs;
