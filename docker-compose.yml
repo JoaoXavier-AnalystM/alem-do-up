@@ -71,6 +71,7 @@ services:
     restart: unless-stopped
     <<: *hardening
     logging: *default-logging
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--web.enable-remote-write-receiver"]
     ports: ["9090:9090"]
     volumes: ["./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro"]
     networks: [lab]
