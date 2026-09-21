@@ -2,7 +2,13 @@
 
 Use este roteiro depois do deploy. Envie um print por etapa ou um conjunto de prints que cubra os itens indicados.
 
-## 1. Estado inicial
+## 1. Duas telas
+
+- Abra `/` para a visão macro do apresentador.
+- Abra `/comprar` em outra aba para os participantes usarem o checkout.
+- Comece em `Normal` e confirme `OK` nas quatro etapas.
+
+## 2. Estado inicial
 
 - Abra `https://aplicacao-ps.joaoxavier.app.br`.
 - Confirme o badge `SISTEMA NORMAL`.
@@ -10,7 +16,7 @@ Use este roteiro depois do deploy. Envie um print por etapa ou um conjunto de pr
 - Confirme `Jornada do usuario: OK`.
 - Envie um print da tela inicial.
 
-## 2. Acessos publicados
+## 3. Acessos publicados
 
 Abra os quatro atalhos da aplicacao e confirme que carregam:
 
@@ -21,14 +27,14 @@ Abra os quatro atalhos da aplicacao e confirme que carregam:
 
 Envie um print da tela de ferramentas ou dos acessos funcionando.
 
-## 3. Pressao controlada
+## 4. Pressao controlada
 
-- Clique em `Provocar incidente`.
-- Observe o destaque das etapas `Pressao`, `Sintoma` e `Evidencia`.
-- Confirme que a API continua acessivel.
-- Envie um print mostrando o estado `INCIDENTE ATIVO`.
+- Na visão macro, clique em `Degradar` e use `/comprar` para mostrar a lentidão.
+- Depois clique em `Saturar` e observe `INCIDENTE` e as falhas no checkout público.
+- Para a narrativa completa, use `Iniciar progressão`: `OK` → `DEGRADADO` → `INCIDENTE` → `OFFLINE`.
+- A página `/` continua acessível em `OFFLINE`; apenas o negócio deixa de concluir.
 
-## 4. Carga k6
+## 5. Carga k6
 
 Na VPS, execute:
 
@@ -58,7 +64,7 @@ Confirme no terminal:
 
 Envie o print do resumo final do k6.
 
-## 5. Grafana
+## 6. Grafana
 
 No dashboard `Checkout - UP mas nao saudavel`, confirme:
 
@@ -79,7 +85,7 @@ No dashboard `Carga k6 - checkout`, confirme:
 
 Envie os prints dos dois dashboards durante a carga.
 
-## 6. Logs e traces
+## 7. Logs e traces
 
 No Loki, procure por:
 
@@ -91,9 +97,9 @@ No Jaeger, procure pelo serviço `checkout-api` e abra um trace de `/checkout`.
 
 Envie um print de um log de `pool_exhausted` e de um trace mostrando a chamada ao banco.
 
-## 7. Recuperacao
+## 8. Recuperacao
 
-- Clique em `Voltar ao normal` ou execute `./scripts/recover.sh`.
+- Clique em `Normal` ou execute `./scripts/recover.sh`.
 - Aguarde o pool esvaziar.
 - Confirme que `Saude tecnica` e `Jornada do usuario` voltaram ao normal.
 - Confirme que os paineis deixam de apresentar novos erros.

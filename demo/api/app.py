@@ -36,6 +36,9 @@ POOL_IN_USE = Gauge("checkout_db_pool_in_use", "Connections currently held by de
 POOL_WAITING = Gauge("checkout_db_pool_waiting", "Requests waiting for a pool connection")
 POOL_SIZE = Gauge("checkout_db_pool_size", "Configured pool size")
 INCIDENT = Gauge("checkout_demo_incident", "1 while incident mode is enabled")
+VALID_MODES = {"normal", "degraded", "incident", "offline", "progressive"}
+DEMO_STAGE_SECONDS = float(os.getenv("DEMO_STAGE_SECONDS", "30"))
+DEGRADED_DELAY_SECONDS = float(os.getenv("DEGRADED_DELAY_SECONDS", "2"))
 
 
 @dataclass
@@ -52,6 +55,8 @@ app = FastAPI(title="Checkout API — UP but not healthy")
 db_pool: asyncpg.Pool | None = None
 UI_PREFIX = os.getenv("APP_UI_PREFIX", "demo").strip("/") or "demo"
 UI_FILE = Path(__file__).parent / "ui" / "index.html"
+SHOP_FILE = Path(__file__).parent / "ui" / "shop.html"
+progression_task: asyncio.Task | None = None
 
 
 class DemoStateRequest(BaseModel):
@@ -73,14 +78,26 @@ def emit(event: str, **fields):
 def health_payload():
     pool_exhausted = demo_state.pool_in_use >= demo_state.pool_size
     degraded = demo_state.mode == "incident" and pool_exhausted
+    if demo_state.mode == "offline":
+        status = "offline"
+        http_status = 503
+        message = "checkout service unavailable"
+    elif demo_state.mode == "degraded":
+        status = "degraded"
+        http_status = 200
+        message = "business latency is degraded"
+    else:
+        status = "degraded" if degraded else "ok"
+        http_status = 503 if degraded else 200
+        message = "pool capacity exhausted" if degraded else "basic process health; business latency may still be degraded"
     return {
-        "status": "degraded" if degraded else "ok",
-        "http_status": 503 if degraded else 200,
+        "status": status,
+        "http_status": http_status,
         "mode": demo_state.mode,
         "pool_in_use": demo_state.pool_in_use,
         "pool_size": demo_state.pool_size,
         "waiting": demo_state.waiting,
-        "message": "basic process health; business latency may still be degraded" if not degraded else "pool capacity exhausted",
+        "message": message,
     }
 
 
@@ -112,6 +129,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    await cancel_progression()
     if db_pool:
         await db_pool.close()
 
@@ -135,10 +153,40 @@ async def presentation_ui():
     return FileResponse(UI_FILE)
 
 
+@app.get("/comprar", include_in_schema=False)
+async def shop_ui():
+    return FileResponse(SHOP_FILE)
+
+
+async def cancel_progression():
+    global progression_task
+    if progression_task and not progression_task.done():
+        progression_task.cancel()
+        try:
+            await progression_task
+        except asyncio.CancelledError:
+            pass
+    progression_task = None
+
+
+async def run_progression():
+    for mode in ("degraded", "incident", "offline"):
+        await asyncio.sleep(DEMO_STAGE_SECONDS)
+        demo_state.mode = mode
+        emit("demo_progression_stage", mode=mode)
+
+
 @app.post("/demo/state")
 async def set_state(request: DemoStateRequest):
-    if request.mode not in {"normal", "incident"}:
-        raise HTTPException(400, "mode must be normal or incident")
+    global progression_task
+    if request.mode not in VALID_MODES:
+        raise HTTPException(400, "mode must be normal, degraded, incident, offline, or progressive")
+    await cancel_progression()
+    if request.mode == "progressive":
+        demo_state.mode = "normal"
+        progression_task = asyncio.create_task(run_progression())
+        emit("demo_progression_started", stage_seconds=DEMO_STAGE_SECONDS)
+        return {"mode": request.mode, "health": health_payload(), "progression": True}
     demo_state.mode = request.mode
     emit("demo_state_changed", mode=request.mode)
     return {"mode": request.mode, "health": health_payload()}
@@ -177,7 +225,12 @@ async def checkout():
     started = time.perf_counter()
     status = "200"
     try:
-        seconds = 0.08 if demo_state.mode == "normal" else 0.35
+        if demo_state.mode == "offline":
+            status = "503"
+            ERRORS.labels("service_offline").inc()
+            emit("checkout_unavailable", reason="service_offline")
+            raise HTTPException(503, "checkout service unavailable")
+        seconds = 0.08 if demo_state.mode == "normal" else DEGRADED_DELAY_SECONDS if demo_state.mode == "degraded" else 0.35
         if demo_state.mode == "incident":
             ok = await hold_connection(seconds)
             if not ok:
@@ -188,8 +241,9 @@ async def checkout():
                 await conn.execute("SELECT 1")
         return {"status": "confirmed", "mode": demo_state.mode}
     except HTTPException:
-        ERRORS.labels("checkout_failed").inc()
-        emit("checkout_failed", reason="pool_exhausted")
+        if demo_state.mode != "offline":
+            ERRORS.labels("checkout_failed").inc()
+            emit("checkout_failed", reason="pool_exhausted")
         raise
     finally:
         duration = time.perf_counter() - started
@@ -204,4 +258,4 @@ async def root():
 
 @app.get("/checkout-api")
 async def api_root():
-    return {"service": "checkout-api", "links": ["/health", "/metrics", "/checkout", f"/{UI_PREFIX}"]}
+    return {"service": "checkout-api", "links": ["/health", "/metrics", "/checkout", "/comprar", f"/{UI_PREFIX}"]}
