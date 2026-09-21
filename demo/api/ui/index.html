@@ -26,6 +26,7 @@
     .links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; } .links a { display: inline-flex; align-items: center; gap: 8px; color: #cbdcff; background: #1b2948; } .service-logo { width: 18px; height: 18px; flex: 0 0 18px; }
     #activity { min-height: 170px; max-height: 230px; overflow: auto; margin-top: 14px; padding: 12px; border-radius: 9px; background: #0a0f1d; color: #b9c7e3; font: 12px/1.7 ui-monospace, monospace; white-space: pre-wrap; }
     .hint { margin-top: 10px; font-size: 13px; } .status-green { color: var(--green); } .status-yellow { color: var(--yellow); } .status-red { color: var(--red); }
+    .story { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; } .story-step { padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #0f172b; } .story-step strong { display: block; margin-bottom: 3px; color: var(--blue); font-size: 13px; } .story-step span { color: var(--muted); font-size: 12px; }
     @media (max-width: 780px) { header { flex-direction: column; } .grid { grid-template-columns: repeat(2, 1fr); } .wide { grid-column: span 2; } }
     @media (max-width: 480px) { main { padding: 24px 14px; } .grid { grid-template-columns: 1fr; } .wide { grid-column: span 1; } }
   </style>
@@ -37,6 +38,7 @@
       <div id="mode" class="badge">carregando…</div>
     </header>
     <section class="grid">
+      <article class="panel wide"><h2>Como ler a demonstracao</h2><p>O processo de saude tecnica para a experiencia do usuario.</p><div class="story"><div class="story-step"><strong>1. Tudo verde</strong><span>API, banco e health respondem.</span></div><div class="story-step"><strong>2. Pressao</strong><span>O checkout demora mais.</span></div><div class="story-step"><strong>3. Sintoma</strong><span>O pool espera e surgem erros.</span></div><div class="story-step"><strong>4. Evidencia</strong><span>Metricas, logs e traces explicam.</span></div></div></article>
       <article class="panel metric"><p>Health endpoint</p><div id="health" class="value">—</div><small id="health-detail">aguardando leitura</small></article>
       <article class="panel metric"><p>Checkout</p><div id="checkout" class="value">—</div><small id="checkout-detail">última chamada</small></article>
       <article class="panel metric"><p>Latência</p><div id="latency" class="value">—</div><small>última resposta do checkout</small></article>

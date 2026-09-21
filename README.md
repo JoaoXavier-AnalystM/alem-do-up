@@ -43,6 +43,17 @@ chmod +x scripts/*.sh
 
 ## Roteiro da demonstração
 
+### Roteiro da palestra
+
+1. Mostre que a API, o banco e o monitoramento estão verdes.
+2. Execute um checkout normal e confirme a resposta rápida.
+3. Ative o incidente e gere carga com `K6_VUS=50 K6_DURATION=5m ./scripts/load.sh`.
+4. Compare o `/health` com o `/checkout`: o processo pode continuar online enquanto a jornada degrada.
+5. No Grafana, correlacione latência, pool e erros; no Loki, procure `pool_exhausted`; no Jaeger, observe a espera no banco.
+6. Recupere o sistema e confirme que os sinais voltam ao normal.
+
+O ponto principal da demonstração é separar disponibilidade técnica de saúde da experiência do usuário.
+
 ```bash
 ./scripts/normal.sh
 ./scripts/incident.sh
