@@ -1,0 +1,18 @@
+{
+  "title": "Visao da demonstracao - UP nao e saudavel",
+  "uid": "presentation-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {"id": 1, "type": "stat", "title": "Tudo verde - API", "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "up{job=\"checkout-api\"}", "legendFormat": "API"}], "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}, "1": {"text": "UP", "color": "green"}}}]}}},
+    {"id": 2, "type": "stat", "title": "Pressao - p95", "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}], "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 2}]}}}},
+    {"id": 3, "type": "stat", "title": "Sintoma - erros", "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum(increase(checkout_errors_total[15m]))", "legendFormat": "erros"}], "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}}},
+    {"id": 4, "type": "stat", "title": "Evidencia - pool waiting", "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "max_over_time(checkout_db_pool_waiting[15m])", "legendFormat": "max waiting"}], "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 5}]}}}},
+    {"id": 5, "type": "timeseries", "title": "A jornada do usuario", "gridPos": {"h": 9, "w": 12, "x": 0, "y": 5}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum(rate(checkout_http_requests_total{path=\"/checkout\",status=\"200\"}[1m]))", "legendFormat": "sucesso/s"}, {"expr": "sum(rate(checkout_http_requests_total{path=\"/checkout\",status=\"503\"}[1m]))", "legendFormat": "falha/s"}]},
+    {"id": 6, "type": "timeseries", "title": "O que explica a experiencia", "gridPos": {"h": 9, "w": 12, "x": 12, "y": 5}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "pool waiting"}]},
+    {"id": 7, "type": "logs", "title": "Logs que contam a historia", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}, "datasource": {"type": "loki", "uid": "loki"}, "targets": [{"expr": "{container=\"api-up\"} |~ \"database_pool_ready|db_pool_exhausted|checkout_failed\"", "refId": "A"}]}
+  ],
+  "links": [{"title": "Observabilidade da aplicacao", "url": "/d/application-observability"}, {"title": "Carga k6", "url": "/d/k6-checkout-load"}, {"title": "Jaeger - traces", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}]
+}

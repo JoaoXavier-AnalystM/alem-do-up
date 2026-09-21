@@ -1,0 +1,18 @@
+{
+  "title": "Infraestrutura - Zabbix",
+  "uid": "infrastructure-zabbix",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {"id": 1, "type": "timeseries", "title": "CPU dos hosts", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "metrics", "group": ".*", "host": ".*", "item": "system.cpu.util"}], "fieldConfig": {"defaults": {"unit": "percent"}}},
+    {"id": 2, "type": "timeseries", "title": "Memoria dos hosts", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "metrics", "group": ".*", "host": ".*", "item": "vm.memory.size[pavailable]"}], "fieldConfig": {"defaults": {"unit": "percent"}}},
+    {"id": 3, "type": "stat", "title": "Disponibilidade", "gridPos": {"h": 5, "w": 6, "x": 0, "y": 8}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "it services", "service": ".*"}], "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 99}]}}}},
+    {"id": 4, "type": "stat", "title": "Problemas ativos", "gridPos": {"h": 5, "w": 6, "x": 6, "y": 8}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "problems", "group": ".*", "host": ".*"}], "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 5}]}}}},
+    {"id": 5, "type": "table", "title": "Problemas por host", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "problems", "group": ".*", "host": ".*"}]},
+    {"id": 6, "type": "timeseries", "title": "Disponibilidade por host", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "metrics", "group": ".*", "host": ".*", "item": "agent.ping"}], "fieldConfig": {"defaults": {"unit": "short", "min": 0, "max": 1}}},
+    {"id": 7, "type": "table", "title": "Itens monitorados", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}, "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "zabbix"}, "targets": [{"refId": "A", "mode": "metrics", "group": ".*", "host": ".*", "item": ".*"}]}
+  ],
+  "links": [{"title": "Observabilidade da aplicacao", "url": "/d/application-observability"}, {"title": "Carga k6", "url": "/d/k6-checkout-load"}, {"title": "Visao da demonstracao", "url": "/d/presentation-overview"}]
+}
