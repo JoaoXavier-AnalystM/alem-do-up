@@ -13,6 +13,8 @@
     h1 { margin: 5px 0 8px; font-size: clamp(26px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.05; }
     h2 { margin: 0 0 4px; font-size: 18px; } p { margin: 0; color: var(--muted); }
     .eyebrow { color: var(--blue); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    .brand { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 14px; color: var(--text); font-weight: 800; letter-spacing: -.02em; }
+    .brand-logo { width: 28px; height: 28px; padding: 5px; border-radius: 8px; background: #2865c8; color: #fff; }
     .badge { border: 1px solid var(--line); background: #17223c; border-radius: 99px; padding: 9px 14px; white-space: nowrap; font-weight: 700; }
     .badge.ok { color: var(--green); } .badge.warn { color: var(--yellow); } .badge.bad { color: var(--red); }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
@@ -21,7 +23,7 @@
     .wide { grid-column: span 2; } .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
     button, a { border: 0; border-radius: 9px; padding: 10px 14px; color: var(--text); background: #253555; font: inherit; cursor: pointer; text-decoration: none; }
     button:hover, a:hover { filter: brightness(1.18); } button.primary { background: #2865c8; } button.danger { background: #86394e; } button:disabled { opacity: .55; cursor: wait; }
-    .links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; } .links a { color: #cbdcff; background: #1b2948; }
+    .links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; } .links a { display: inline-flex; align-items: center; gap: 8px; color: #cbdcff; background: #1b2948; } .service-logo { width: 18px; height: 18px; flex: 0 0 18px; }
     #activity { min-height: 170px; max-height: 230px; overflow: auto; margin-top: 14px; padding: 12px; border-radius: 9px; background: #0a0f1d; color: #b9c7e3; font: 12px/1.7 ui-monospace, monospace; white-space: pre-wrap; }
     .hint { margin-top: 10px; font-size: 13px; } .status-green { color: var(--green); } .status-yellow { color: var(--yellow); } .status-red { color: var(--red); }
     @media (max-width: 780px) { header { flex-direction: column; } .grid { grid-template-columns: repeat(2, 1fr); } .wide { grid-column: span 2; } }
@@ -31,7 +33,7 @@
 <body>
   <main>
     <header>
-      <div><div class="eyebrow">Laboratório de observabilidade</div><h1>UP não é o mesmo que saudável.</h1><p>Interaja com o checkout e veja a saúde real do sistema mudar em tempo real.</p></div>
+      <div><div class="brand"><svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-10Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 21h8M12 18.5V21M7 9h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Aplicação web</span></div><div class="eyebrow">Laboratório de observabilidade</div><h1>UP não é o mesmo que saudável.</h1><p>Interaja com o checkout e veja a saúde real do sistema mudar em tempo real.</p></div>
       <div id="mode" class="badge">carregando…</div>
     </header>
     <section class="grid">
@@ -40,7 +42,12 @@
       <article class="panel metric"><p>Latência</p><div id="latency" class="value">—</div><small>última resposta do checkout</small></article>
       <article class="panel metric"><p>Erros</p><div id="errors" class="value">0</div><small>pool esgotado</small></article>
       <article class="panel wide"><h2>Controle da demonstração</h2><p>Comece normal, provoque o incidente e observe o pool ficar saturado.</p><div class="actions"><button class="primary" data-action="normal">Voltar ao normal</button><button class="danger" data-action="incident">Provocar incidente</button><button data-action="load">Gerar carga no pool</button></div><p class="hint">A carga usa requisições controladas e pode retornar 503 quando todas as conexões estiverem ocupadas.</p></article>
-      <article class="panel wide"><h2>Pool de conexões</h2><p id="pool">em uso — · esperando — · tamanho —</p><div class="links"><a id="grafana" target="_blank" rel="noreferrer">Abrir Grafana</a><a id="jaeger" target="_blank" rel="noreferrer">Abrir Jaeger</a><a id="watch" target="_blank" rel="noreferrer">Abrir OpenDockWatch</a></div></article>
+      <article class="panel wide"><h2>Pool de conexões</h2><p id="pool">em uso — · esperando — · tamanho —</p><div class="links">
+        <a id="grafana" target="_blank" rel="noreferrer"><svg class="service-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#f59e0b" stroke-width="3"/><circle cx="12" cy="12" r="3" fill="#f59e0b"/></svg>Grafana</a>
+        <a id="jaeger" target="_blank" rel="noreferrer"><svg class="service-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 1 15.5 2.5L22 20l-3.5-2.5A8 8 0 0 1 4 12Z" fill="none" stroke="#c084fc" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="#c084fc"/></svg>Jaeger</a>
+        <a id="watch" target="_blank" rel="noreferrer"><svg class="service-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Z" fill="none" stroke="#4ade80" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="#4ade80"/></svg>OpenDockWatch</a>
+        <a id="zabbix" target="_blank" rel="noreferrer"><svg class="service-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16L8 19h12" fill="none" stroke="#ef4444" stroke-width="3" stroke-linejoin="round"/></svg>Zabbix</a>
+      </div></article>
       <article class="panel wide"><h2>Atividade da apresentação</h2><p>Eventos desta sessão do navegador.</p><div id="activity">Aguardando os primeiros eventos…</div></article>
     </section>
   </main>
@@ -55,7 +62,13 @@
     async function state(mode) { const button = document.querySelector(`[data-action="${mode}"]`); button.disabled = true; try { await fetch(`${api}/demo/state`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({mode}) }); log(`modo alterado para ${mode}`); await readHealth(); } finally { button.disabled = false; } }
     async function load() { const button = document.querySelector('[data-action="load"]'); button.disabled = true; try { await state('incident'); const count = 8; log(`gerando ${count} requisições concorrentes`); await Promise.all(Array.from({length: count}, () => fetch(`${api}/demo/hold`, {method:'POST'}))); await readHealth(); await readMetrics(); log('carga concluída; confira o pool e os logs'); } finally { button.disabled = false; } }
     document.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => button.dataset.action === 'load' ? load() : state(button.dataset.action)));
-    const host = window.location.hostname; $('#grafana').href = `http://${host}:3000`; $('#jaeger').href = `http://${host}:16686`; $('#watch').href = `http://${host}:3001`;
+    const host = window.location.hostname;
+    const domain = host.replace(/^aplicacao-ps\./, '');
+    const serviceUrl = (name) => `https://${name}-ps.${domain}`;
+    $('#grafana').href = serviceUrl('grafana');
+    $('#jaeger').href = serviceUrl('jaeger');
+    $('#watch').href = serviceUrl('opendock');
+    $('#zabbix').href = serviceUrl('zabbix');
     readHealth(); readMetrics(); checkCheckout(); setInterval(() => { readHealth(); readMetrics(); }, 3000);
   </script>
 </body>
