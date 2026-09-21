@@ -174,6 +174,12 @@ async def run_progression():
         await asyncio.sleep(DEMO_STAGE_SECONDS)
         demo_state.mode = mode
         emit("demo_progression_stage", mode=mode)
+        if mode == "incident":
+            holds = [
+                hold_connection(max(DEMO_STAGE_SECONDS, demo_state.hold_seconds))
+                for _ in range(demo_state.pool_size + 2)
+            ]
+            await asyncio.gather(*holds, return_exceptions=True)
 
 
 @app.post("/demo/state")
