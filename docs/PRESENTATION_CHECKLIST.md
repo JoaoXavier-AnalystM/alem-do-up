@@ -87,7 +87,7 @@ No Loki, procure por:
 {container="api-up"} |= "pool"
 ```
 
-No Jaeger, procure pelo servico `checkout-api` e abra um trace de `/checkout`.
+No Jaeger, procure pelo serviço `checkout-api` e abra um trace de `/checkout`.
 
 Envie um print de um log de `pool_exhausted` e de um trace mostrando a chamada ao banco.
 

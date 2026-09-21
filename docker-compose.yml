@@ -44,7 +44,7 @@ services:
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
       DB_POOL_MAX: ${DB_POOL_MAX:-5}
       INCIDENT_HOLD_SECONDS: ${INCIDENT_HOLD_SECONDS:-8}
-      OTEL_SERVICE_NAME: api-up
+      OTEL_SERVICE_NAME: checkout-api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on: {db: {condition: service_healthy}}
     healthcheck:
