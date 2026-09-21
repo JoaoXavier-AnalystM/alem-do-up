@@ -7,6 +7,11 @@ Use este roteiro depois do deploy. Envie um print por etapa ou um conjunto de pr
 - Abra `/` para a visão macro do apresentador.
 - Abra `/comprar` em outra aba para os participantes usarem o checkout.
 - Comece em `Normal` e confirme `OK` nas quatro etapas.
+- Na tela `/comprar`, envie cadastros preenchendo nome, idade e cargo/profissão.
+- Use a sequência: 10 cadastros para degradar, 20 para problema crítico e 25 para offline.
+
+Os limiares podem ser ajustados no `.env` por `DEMO_DEGRADED_AFTER`,
+`DEMO_CRITICAL_AFTER` e `DEMO_OFFLINE_AFTER`; depois, recrie o serviço da API.
 
 ## 2. Estado inicial
 

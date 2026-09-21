@@ -39,6 +39,9 @@ INCIDENT = Gauge("checkout_demo_incident", "1 while incident mode is enabled")
 VALID_MODES = {"normal", "degraded", "incident", "offline", "progressive"}
 DEMO_STAGE_SECONDS = float(os.getenv("DEMO_STAGE_SECONDS", "30"))
 DEGRADED_DELAY_SECONDS = float(os.getenv("DEGRADED_DELAY_SECONDS", "2"))
+DEMO_DEGRADED_AFTER = int(os.getenv("DEMO_DEGRADED_AFTER", "10"))
+DEMO_CRITICAL_AFTER = int(os.getenv("DEMO_CRITICAL_AFTER", "20"))
+DEMO_OFFLINE_AFTER = int(os.getenv("DEMO_OFFLINE_AFTER", "25"))
 
 
 @dataclass
@@ -48,6 +51,7 @@ class DemoState:
     pool_size: int = int(os.getenv("DB_POOL_MAX", "5"))
     hold_seconds: float = float(os.getenv("INCIDENT_HOLD_SECONDS", "8"))
     waiting: int = 0
+    submissions: int = 0
 
 
 demo_state = DemoState()
@@ -61,6 +65,12 @@ progression_task: asyncio.Task | None = None
 
 class DemoStateRequest(BaseModel):
     mode: str
+
+
+class CheckoutSubmission(BaseModel):
+    name: str
+    age: int
+    profession: str
 
 
 if trace and os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
@@ -77,7 +87,8 @@ def emit(event: str, **fields):
 
 def health_payload():
     pool_exhausted = demo_state.pool_in_use >= demo_state.pool_size
-    degraded = demo_state.mode == "incident" and pool_exhausted
+    critical = demo_state.mode == "incident" and (pool_exhausted or demo_state.submissions >= DEMO_CRITICAL_AFTER)
+    degraded = demo_state.mode == "incident" and critical
     if demo_state.mode == "offline":
         status = "offline"
         http_status = 503
@@ -98,6 +109,8 @@ def health_payload():
         "pool_size": demo_state.pool_size,
         "waiting": demo_state.waiting,
         "message": message,
+        "submissions": demo_state.submissions,
+        "thresholds": {"degraded": DEMO_DEGRADED_AFTER, "critical": DEMO_CRITICAL_AFTER, "offline": DEMO_OFFLINE_AFTER},
     }
 
 
@@ -190,10 +203,13 @@ async def set_state(request: DemoStateRequest):
     await cancel_progression()
     if request.mode == "progressive":
         demo_state.mode = "normal"
+        demo_state.submissions = 0
         progression_task = asyncio.create_task(run_progression())
         emit("demo_progression_started", stage_seconds=DEMO_STAGE_SECONDS)
         return {"mode": request.mode, "health": health_payload(), "progression": True}
     demo_state.mode = request.mode
+    if request.mode == "normal":
+        demo_state.submissions = 0
     emit("demo_state_changed", mode=request.mode)
     return {"mode": request.mode, "health": health_payload()}
 
@@ -226,16 +242,39 @@ async def demo_hold(seconds: float | None = None):
     return JSONResponse({"accepted": accepted, "pool_in_use": demo_state.pool_in_use}, status_code=200 if accepted else 503)
 
 
-@app.get("/checkout")
-async def checkout():
+def register_submission():
+    demo_state.submissions += 1
+    if demo_state.submissions >= DEMO_OFFLINE_AFTER:
+        demo_state.mode = "offline"
+        threshold = "offline"
+    elif demo_state.submissions >= DEMO_CRITICAL_AFTER:
+        demo_state.mode = "incident"
+        threshold = "critical"
+    elif demo_state.submissions >= DEMO_DEGRADED_AFTER:
+        demo_state.mode = "degraded"
+        threshold = "degraded"
+    else:
+        threshold = "normal"
+    emit("checkout_threshold_reached", submissions=demo_state.submissions, threshold=threshold, mode=demo_state.mode)
+
+
+async def process_checkout(method: str = "GET"):
     started = time.perf_counter()
     status = "200"
+    failure_reason = None
     try:
         if demo_state.mode == "offline":
             status = "503"
+            failure_reason = "service_offline"
             ERRORS.labels("service_offline").inc()
             emit("checkout_unavailable", reason="service_offline")
             raise HTTPException(503, "checkout service unavailable")
+        if demo_state.mode == "incident" and demo_state.submissions >= DEMO_CRITICAL_AFTER:
+            status = "503"
+            failure_reason = "critical_threshold"
+            ERRORS.labels("critical_threshold").inc()
+            emit("checkout_failed", reason="critical_threshold", submissions=demo_state.submissions)
+            raise HTTPException(503, "checkout critical threshold reached")
         seconds = 0.08 if demo_state.mode == "normal" else DEGRADED_DELAY_SECONDS if demo_state.mode == "degraded" else 0.35
         if demo_state.mode == "incident":
             ok = await hold_connection(seconds)
@@ -247,14 +286,26 @@ async def checkout():
                 await conn.execute("SELECT 1")
         return {"status": "confirmed", "mode": demo_state.mode}
     except HTTPException:
-        if demo_state.mode != "offline":
+        if failure_reason is None:
+            failure_reason = "pool_exhausted"
             ERRORS.labels("checkout_failed").inc()
-            emit("checkout_failed", reason="pool_exhausted")
+            emit("checkout_failed", reason=failure_reason)
         raise
     finally:
         duration = time.perf_counter() - started
         LATENCY.labels("/checkout").observe(duration)
-        REQUESTS.labels("/checkout", "GET", status).inc()
+        REQUESTS.labels("/checkout", method, status).inc()
+
+
+@app.get("/checkout")
+async def checkout():
+    return await process_checkout()
+
+
+@app.post("/checkout")
+async def submit_checkout(submission: CheckoutSubmission):
+    register_submission()
+    return await process_checkout("POST")
 
 
 @app.get("/")

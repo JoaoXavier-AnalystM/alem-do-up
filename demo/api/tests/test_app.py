@@ -5,13 +5,14 @@ os.environ["APP_DB_NAME"] = "demo"
 os.environ["APP_DB_USER"] = "demo"
 os.environ["APP_DB_PASSWORD"] = "test-only"
 
-from demo.api.app import DemoStateRequest, app, demo_state, health_payload, set_state
+from demo.api.app import DemoStateRequest, app, demo_state, health_payload, register_submission, set_state
 
 
 def reset_state():
     demo_state.mode = "normal"
     demo_state.pool_in_use = 0
     demo_state.waiting = 0
+    demo_state.submissions = 0
 
 
 def test_health_stays_200_while_incident_is_degraded():
@@ -66,3 +67,19 @@ def test_demo_state_accepts_progressive_mode():
     response = asyncio.run(set_state(DemoStateRequest(mode="progressive")))
     assert response["mode"] == "progressive"
     assert response["progression"] is True
+
+
+def test_public_submission_thresholds_progress_to_offline():
+    reset_state()
+    for _ in range(9):
+        register_submission()
+    assert demo_state.mode == "normal"
+    register_submission()
+    assert demo_state.mode == "degraded"
+    for _ in range(10):
+        register_submission()
+    assert demo_state.mode == "incident"
+    for _ in range(5):
+        register_submission()
+    assert demo_state.mode == "offline"
+    assert demo_state.submissions == 25
