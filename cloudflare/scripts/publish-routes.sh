@@ -38,7 +38,7 @@ config_payload="$(printf '%s' "$current_config" | jq \
    | map(select(.hostname != $app_host and .hostname != $grafana_host and .service != "http_status:404"))
    | . + [
        {"hostname": $app_host, "service": ("http://" + $origin_host + ":5055")},
-       {"hostname": $grafana_host, "service": ("http://" + $origin_host + ":3030")},
+       {"hostname": $grafana_host, "service": ("http://" + $origin_host + ":3000")},
        {"service": "http_status:404"}
      ]
    | {"config": {"ingress": .}}')"

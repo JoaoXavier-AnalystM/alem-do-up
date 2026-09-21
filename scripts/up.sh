@@ -33,4 +33,4 @@ $COMPOSE up -d --remove-orphans --no-build zabbix-db jaeger loki prometheus prom
 $COMPOSE up -d --remove-orphans --no-build nginx grafana zabbix-server zabbix-web zabbix-agent2
 $COMPOSE ps
 
-echo "API: http://localhost:5055 | Grafana: http://localhost:${GRAFANA_PORT:-3030} | Jaeger: http://localhost:16686"
+echo "API: http://localhost:5055 | Grafana: http://localhost:${GRAFANA_PORT:-3000} | Jaeger: http://localhost:16686"

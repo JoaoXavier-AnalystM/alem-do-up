@@ -55,7 +55,7 @@ os indicadores em uma tela:
 
 - Interface da aplicação: <http://localhost:5055>
 - Índice técnico da API: <http://localhost:5055/checkout-api>
-- Grafana: <http://localhost:3030>
+- Grafana: <http://localhost:3000>
 - Prometheus: <http://localhost:9090>
 - Jaeger: <http://localhost:16686>
 - OpenDockWatch separado: <http://localhost:3001>

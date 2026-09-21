@@ -46,6 +46,6 @@ Para o cadastro automático de DNS e rotas, serão adicionados depois:
 O workflow cria automaticamente:
 
 - `aplicacao-ps.<CLOUDFLARE_DOMAIN>` → API/interface na porta `5055`;
-- `grafana-ps.<CLOUDFLARE_DOMAIN>` → Grafana na porta `3030`.
+- `grafana-ps.<CLOUDFLARE_DOMAIN>` → Grafana na porta `3000`.
 
 Os CNAMEs apontam para `<CLOUDFLARE_TUNNEL_ID>.cfargotunnel.com`.

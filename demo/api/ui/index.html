@@ -55,7 +55,7 @@
     async function state(mode) { const button = document.querySelector(`[data-action="${mode}"]`); button.disabled = true; try { await fetch(`${api}/demo/state`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({mode}) }); log(`modo alterado para ${mode}`); await readHealth(); } finally { button.disabled = false; } }
     async function load() { const button = document.querySelector('[data-action="load"]'); button.disabled = true; try { await state('incident'); const count = 8; log(`gerando ${count} requisições concorrentes`); await Promise.all(Array.from({length: count}, () => fetch(`${api}/demo/hold`, {method:'POST'}))); await readHealth(); await readMetrics(); log('carga concluída; confira o pool e os logs'); } finally { button.disabled = false; } }
     document.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => button.dataset.action === 'load' ? load() : state(button.dataset.action)));
-    const host = window.location.hostname; $('#grafana').href = `http://${host}:3030`; $('#jaeger').href = `http://${host}:16686`; $('#watch').href = `http://${host}:3001`;
+    const host = window.location.hostname; $('#grafana').href = `http://${host}:3000`; $('#jaeger').href = `http://${host}:16686`; $('#watch').href = `http://${host}:3001`;
     readHealth(); readMetrics(); checkCheckout(); setInterval(() => { readHealth(); readMetrics(); }, 3000);
   </script>
 </body>

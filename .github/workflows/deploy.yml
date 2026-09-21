@@ -69,7 +69,7 @@ jobs:
           cp .env.example .env
           echo "Atualizado .env a partir de .env.example"
 
-          for variable in APP_DB_PASSWORD ZBX_DB_PASSWORD GRAFANA_ADMIN_PASSWORD ZABBIX_API_USER ZABBIX_API_PASSWORD; do
+          for variable in APP_DB_PASSWORD ZBX_DB_PASSWORD GRAFANA_ADMIN_PASSWORD; do
             if ! grep -Eq "^${variable}=.+$" .env; then
               echo "Variável obrigatória ausente ou vazia no .env: ${variable}" >&2
               exit 1
