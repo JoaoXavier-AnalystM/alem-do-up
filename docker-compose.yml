@@ -80,7 +80,8 @@ services:
     networks: [lab]
   grafana:
     container_name: grafana
-    image: grafana/grafana-oss:12.3.1-security-01
+    build: ./observability/grafana
+    image: palestra-grafana:12.3.1-zabbix
     restart: unless-stopped
     <<: *hardening
     logging: *default-logging
@@ -89,10 +90,11 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
-      GF_PLUGINS_PREINSTALL: alexanderzobnin-zabbix-app
       APP_DB_NAME: ${APP_DB_NAME}
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      ZBX_API_USER: ${ZBX_API_USER}
+      ZBX_API_PASSWORD: ${ZBX_API_PASSWORD}
     volumes: ["grafana_data:/var/lib/grafana", "./observability/grafana/provisioning:/etc/grafana/provisioning:ro", "./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"]
     depends_on: [prometheus, loki, jaeger]
     networks: [lab]

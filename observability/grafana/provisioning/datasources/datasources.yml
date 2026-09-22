@@ -34,3 +34,9 @@ datasources:
     type: alexanderzobnin-zabbix-datasource
     access: proxy
     url: https://zabbix-ps.joaoxavier.app.br/api_jsonrpc.php
+    jsonData:
+      authType: userpass
+      username: $__env{ZBX_API_USER}
+      tlsSkipVerify: true
+    secureJsonData:
+      password: $__env{ZBX_API_PASSWORD}
