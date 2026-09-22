@@ -71,15 +71,15 @@ def test_demo_state_accepts_progressive_mode():
 
 def test_public_submission_thresholds_progress_to_offline():
     reset_state()
-    for _ in range(9):
+    for _ in range(4):
         register_submission()
     assert demo_state.mode == "normal"
     register_submission()
     assert demo_state.mode == "degraded"
-    for _ in range(10):
+    for _ in range(5):
         register_submission()
     assert demo_state.mode == "incident"
     for _ in range(5):
         register_submission()
     assert demo_state.mode == "offline"
-    assert demo_state.submissions == 25
+    assert demo_state.submissions == 15

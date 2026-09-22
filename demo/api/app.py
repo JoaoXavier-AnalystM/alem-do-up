@@ -39,9 +39,9 @@ INCIDENT = Gauge("checkout_demo_incident", "1 while incident mode is enabled")
 VALID_MODES = {"normal", "degraded", "incident", "offline", "progressive"}
 DEMO_STAGE_SECONDS = float(os.getenv("DEMO_STAGE_SECONDS", "30"))
 DEGRADED_DELAY_SECONDS = float(os.getenv("DEGRADED_DELAY_SECONDS", "2"))
-DEMO_DEGRADED_AFTER = int(os.getenv("DEMO_DEGRADED_AFTER", "10"))
-DEMO_CRITICAL_AFTER = int(os.getenv("DEMO_CRITICAL_AFTER", "20"))
-DEMO_OFFLINE_AFTER = int(os.getenv("DEMO_OFFLINE_AFTER", "25"))
+DEMO_DEGRADED_AFTER = int(os.getenv("DEMO_DEGRADED_AFTER", "5"))
+DEMO_CRITICAL_AFTER = int(os.getenv("DEMO_CRITICAL_AFTER", "10"))
+DEMO_OFFLINE_AFTER = int(os.getenv("DEMO_OFFLINE_AFTER", "15"))
 
 
 @dataclass
