@@ -11,7 +11,7 @@
       "type": "timeseries",
       "title": "CPU - porteira-server",
       "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "CPU utilization"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "percent", "decimals": 1, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 70}, {"color": "red", "value": 90}]}}}
     },
@@ -20,7 +20,7 @@
       "type": "timeseries",
       "title": "Memoria disponivel - porteira-server",
       "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "Available memory in %"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "percent", "decimals": 1, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "orange", "value": 20}, {"color": "green", "value": 40}]}}}
     },
@@ -29,7 +29,7 @@
       "type": "timeseries",
       "title": "Load average (1 min) - porteira-server",
       "gridPos": {"h": 9, "w": 12, "x": 0, "y": 9},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "Load average (1m avg)"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "short", "decimals": 2}}
     },
@@ -38,7 +38,7 @@
       "type": "stat",
       "title": "CPU atual",
       "gridPos": {"h": 5, "w": 4, "x": 12, "y": 9},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "CPU utilization"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "percent", "decimals": 1}}
     },
@@ -47,7 +47,7 @@
       "type": "stat",
       "title": "Memoria disponivel atual",
       "gridPos": {"h": 5, "w": 4, "x": 16, "y": 9},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "Available memory in %"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "percent", "decimals": 1}}
     },
@@ -56,7 +56,7 @@
       "type": "stat",
       "title": "Load atual",
       "gridPos": {"h": 5, "w": 4, "x": 20, "y": 9},
-      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxsz3q8bocgb"},
+      "datasource": {"type": "alexanderzobnin-zabbix-datasource", "uid": "dfyxo4mmoy8lce"},
       "targets": [{"refId": "A", "queryType": "0", "mode": 0, "group": {"filter": "/.*/"}, "host": {"filter": "porteira-server"}, "item": {"filter": "Load average (1m avg)"}, "application": {"filter": ""}, "itemTag": {"filter": ""}, "macro": {"filter": ""}, "proxy": {"filter": ""}, "tags": {"filter": ""}, "trigger": {"filter": ""}, "functions": [], "options": {"count": false, "disableDataAlignment": false, "showDisabledItems": false, "skipEmptyValues": false, "useTrends": "default", "useZabbixValueMapping": false}, "table": {"skipEmptyValues": false}, "textFilter": "", "resultFormat": "time_series", "schema": 12}],
       "fieldConfig": {"defaults": {"unit": "short", "decimals": 2}}
     }

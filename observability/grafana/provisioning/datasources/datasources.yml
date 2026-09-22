@@ -29,3 +29,8 @@ datasources:
       timescaledb: true
     secureJsonData:
       password: $__env{APP_DB_PASSWORD}
+  - name: Zabbix
+    uid: dfyxo4mmoy8lce
+    type: alexanderzobnin-zabbix-datasource
+    access: proxy
+    url: https://zabbix-ps.joaoxavier.app.br/api_jsonrpc.php
