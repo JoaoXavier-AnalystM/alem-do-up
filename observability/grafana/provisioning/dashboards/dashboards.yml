@@ -3,4 +3,5 @@ providers:
   - name: palestra
     type: file
     updateIntervalSeconds: 10
-    options: {path: /var/lib/grafana/dashboards}
+    folder: DIA D
+    options: {path: /var/lib/grafana/dashboards/DIA D}

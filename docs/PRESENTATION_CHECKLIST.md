@@ -8,7 +8,7 @@ Use este roteiro depois do deploy. Envie um print por etapa ou um conjunto de pr
 - Abra `/comprar` em outra aba para os participantes usarem o checkout.
 - Comece em `Normal` e confirme `OK` nas quatro etapas.
 - Na tela `/comprar`, envie cadastros preenchendo nome, idade e cargo/profissão.
-- Use a sequência: 5 cadastros para degradar, 10 para problema crítico e 15 para offline.
+- Use a sequência: 5 cadastros para degradar, 12 para problema crítico e 22 para offline.
 
 Os limiares podem ser ajustados no `.env` por `DEMO_DEGRADED_AFTER`,
 `DEMO_CRITICAL_AFTER` e `DEMO_OFFLINE_AFTER`; depois, recrie o serviço da API.
@@ -41,6 +41,19 @@ Envie um print da tela de ferramentas ou dos acessos funcionando.
 
 ## 5. Carga k6
 
+Para a demonstração gradual, mantenha a aplicação normal e execute:
+
+```bash
+./scripts/gradual.sh
+```
+
+O teste começa com 4 VUs por 2 minutos e adiciona 1 VU a cada minuto,
+mantendo o checkout lento, porém respondendo. Para uma rodada curta:
+
+```bash
+GRADUAL_MAX_VUS=8 GRADUAL_STEP_DURATION=20s ./scripts/gradual.sh
+```
+
 Na VPS, execute:
 
 ```bash
@@ -69,9 +82,16 @@ Confirme no terminal:
 
 Envie o print do resumo final do k6.
 
-## 6. Grafana
+## 6. Grafana — pasta DIA D
 
-No dashboard `Checkout - UP mas nao saudavel`, confirme:
+Abra os dashboards nesta ordem:
+
+1. `01 - Servidor OK - porteira-server`
+2. `02 - Banco e Python/API OK`
+3. `03 - Visão operacional - tudo UP`
+4. `04 - Traces, logs, métricas e erros`
+
+No dashboard `04 - Traces, logs, métricas e erros`, confirme:
 
 - p95 do checkout;
 - pool em uso;

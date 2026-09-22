@@ -40,8 +40,8 @@ VALID_MODES = {"normal", "degraded", "incident", "offline", "progressive"}
 DEMO_STAGE_SECONDS = float(os.getenv("DEMO_STAGE_SECONDS", "30"))
 DEGRADED_DELAY_SECONDS = float(os.getenv("DEGRADED_DELAY_SECONDS", "2"))
 DEMO_DEGRADED_AFTER = int(os.getenv("DEMO_DEGRADED_AFTER", "5"))
-DEMO_CRITICAL_AFTER = int(os.getenv("DEMO_CRITICAL_AFTER", "10"))
-DEMO_OFFLINE_AFTER = int(os.getenv("DEMO_OFFLINE_AFTER", "15"))
+DEMO_CRITICAL_AFTER = int(os.getenv("DEMO_CRITICAL_AFTER", "12"))
+DEMO_OFFLINE_AFTER = int(os.getenv("DEMO_OFFLINE_AFTER", "22"))
 
 
 @dataclass
@@ -284,6 +284,8 @@ async def process_checkout(method: str = "GET"):
         elif db_pool:
             async with db_pool.acquire() as conn:
                 await conn.execute("SELECT 1")
+            if demo_state.mode == "degraded":
+                await asyncio.sleep(DEGRADED_DELAY_SECONDS)
         return {"status": "confirmed", "mode": demo_state.mode}
     except HTTPException:
         if failure_reason is None:

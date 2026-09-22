@@ -1,5 +1,5 @@
 {
-  "title": "Observabilidade - API e banco",
+  "title": "02 - Banco e Python/API OK",
   "uid": "application-observability",
   "schemaVersion": 39,
   "version": 1,
@@ -16,5 +16,5 @@
     {"id": 8, "type": "timeseries", "title": "Banco - conexoes ativas", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13}, "datasource": {"type": "postgres", "uid": "postgres"}, "targets": [{"rawSql": "SELECT now() AS time, count(*)::double precision AS value FROM pg_stat_activity WHERE datname = current_database();", "format": "time_series", "refId": "A"}]},
     {"id": 9, "type": "logs", "title": "Eventos de pool", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 21}, "datasource": {"type": "loki", "uid": "loki"}, "targets": [{"expr": "{container=\"api-up\"} |~ \"pool|checkout_failed\"", "refId": "A"}]}
   ],
-  "links": [{"title": "Jaeger - traces", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}, {"title": "Carga k6", "url": "/d/k6-checkout-load"}, {"title": "Visao da demonstracao", "url": "/d/presentation-overview"}]
+  "links": [{"title": "Visao operacional", "url": "/d/presentation-overview"}, {"title": "Jaeger - traces", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}]
 }

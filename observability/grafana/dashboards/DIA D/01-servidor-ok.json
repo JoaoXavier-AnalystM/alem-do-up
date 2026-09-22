@@ -1,5 +1,5 @@
 {
-  "title": "Infraestrutura - porteira-server",
+  "title": "01 - Servidor OK - porteira-server",
   "uid": "infrastructure-zabbix",
   "schemaVersion": 39,
   "version": 3,
@@ -61,5 +61,5 @@
       "fieldConfig": {"defaults": {"unit": "short", "decimals": 2}}
     }
   ],
-  "links": [{"title": "Observabilidade da aplicacao", "url": "/d/application-observability"}, {"title": "Carga k6", "url": "/d/k6-checkout-load"}, {"title": "Visao da demonstracao", "url": "/d/presentation-overview"}]
+  "links": [{"title": "Banco e Python/API OK", "url": "/d/application-observability"}, {"title": "Visao operacional", "url": "/d/presentation-overview"}]
 }

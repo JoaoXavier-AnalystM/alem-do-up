@@ -76,10 +76,10 @@ def test_public_submission_thresholds_progress_to_offline():
     assert demo_state.mode == "normal"
     register_submission()
     assert demo_state.mode == "degraded"
-    for _ in range(5):
+    for _ in range(7):
         register_submission()
     assert demo_state.mode == "incident"
-    for _ in range(5):
+    for _ in range(10):
         register_submission()
     assert demo_state.mode == "offline"
-    assert demo_state.submissions == 15
+    assert demo_state.submissions == 22

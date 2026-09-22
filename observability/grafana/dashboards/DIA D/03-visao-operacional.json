@@ -1,5 +1,5 @@
 {
-  "title": "Visao da demonstracao - UP nao e saudavel",
+  "title": "03 - Visao operacional - tudo UP",
   "uid": "presentation-overview",
   "schemaVersion": 39,
   "version": 1,
@@ -14,5 +14,5 @@
     {"id": 6, "type": "timeseries", "title": "O que explica a experiencia", "gridPos": {"h": 9, "w": 12, "x": 12, "y": 5}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "pool waiting"}]},
     {"id": 7, "type": "logs", "title": "Logs que contam a historia", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}, "datasource": {"type": "loki", "uid": "loki"}, "targets": [{"expr": "{container=\"api-up\"} |~ \"database_pool_ready|db_pool_exhausted|checkout_failed\"", "refId": "A"}]}
   ],
-  "links": [{"title": "Observabilidade da aplicacao", "url": "/d/application-observability"}, {"title": "Carga k6", "url": "/d/k6-checkout-load"}, {"title": "Jaeger - traces", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}]
+  "links": [{"title": "Banco e Python/API OK", "url": "/d/application-observability"}, {"title": "Traces no Jaeger", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}]
 }
