@@ -1,9 +1,7 @@
 # Seu sistema está UP. Mas ele está saudável?
 
-Laboratório de observabilidade para uma palestra.
-
-A demonstração mostra uma aplicação que continua tecnicamente disponível, mas
-fica degradada quando o pool de conexões com o PostgreSQL é ocupado:
+Laboratório de observabilidade para uma palestra. A demonstração separa
+disponibilidade técnica da saúde da jornada de checkout.
 
 ```text
 Usuário → Nginx → Checkout API → PostgreSQL
@@ -11,77 +9,110 @@ Usuário → Nginx → Checkout API → PostgreSQL
        métricas · logs · traces · alertas
 ```
 
-## O que existe
+## Contrato local
 
-- API FastAPI com checkout, healthcheck e métricas Prometheus.
-- PostgreSQL/TimescaleDB com pool de conexões controlado.
-- Nginx, Prometheus, Grafana, Loki, Jaeger e OpenTelemetry.
-- Zabbix opcional para comparar disponibilidade com saúde real.
-- OpenDockWatch separado para acompanhar os containers Docker da VPS.
-- Scripts shell para iniciar, provocar, observar e recuperar o incidente.
+- `/health` retorna HTTP 200 em `normal`, `degraded` e `incident`, inclusive
+  quando o pool está sob pressão. O JSON pode informar `status: degraded` e
+  `pool_saturated: true` sem derrubar a liveness.
+- `/checkout` retorna 200 normalmente, fica lento em `degraded` e pode retornar
+  503 quando o pool esgota ou o modo chega ao limiar crítico.
+- `incident` ocupa conexões do pool; `load` aumenta a pressão; `recover` volta
+  para `normal`, cancela holders e zera contadores de pressão.
+- `offline` é o único modo de demonstração que retorna 503 em `/health`.
+- `/metrics` expõe RED HTTP e `checkout_db_pool_*` para Prometheus.
 
-## O que vamos testar e comprovar
+Valores padrão do laboratório: `DB_POOL_MAX=5`,
+`INCIDENT_HOLD_SECONDS=8`, degradação após 5 cadastros, incidente após 12 e
+offline após 22. Variáveis estão em `.env.example`.
 
-1. O sistema inicia e responde normalmente.
-2. O `/health` continua verde no começo do problema.
-3. O checkout fica mais lento e começa a falhar.
-4. O pool mostra conexões ocupadas e requisições esperando.
-5. Métricas, logs e traces apontam para a mesma causa.
-6. Ao liberar as conexões, a aplicação se recupera.
+## Subir o laboratório
 
-## Executar localmente ou na VPS
-
-Pré-requisitos: Docker Compose e, para carga, `k6` ou `hey`.
+Requisitos: Docker Engine com Docker Compose, Bash e `curl`. Para carga, use
+`k6` ou `hey`.
 
 ```bash
 cp .env.example .env
-# Os valores do exemplo são apenas para o laboratório.
+docker compose config --quiet
 chmod +x scripts/*.sh
 ./scripts/up.sh
 ./scripts/smoke.sh
 ```
 
-## Roteiro da demonstração
+`scripts/up.sh` usa o `docker-compose.yml` principal, sobe a API e o
+monitoramento, e inclui o perfil Zabbix. `scripts/smoke.sh` verifica
+`/health`, `/metrics` e `/checkout`.
 
-### Roteiro da palestra
-
-1. Mostre que a API, o banco e o monitoramento estão verdes.
-2. Execute um checkout normal e confirme a resposta rápida.
-3. Ative o incidente e gere carga com `K6_INCIDENT=true K6_VUS=50 K6_DURATION=5m ./scripts/load.sh`.
-4. Compare o `/health` com o `/checkout`: o processo pode continuar online enquanto a jornada degrada.
-5. No Grafana, correlacione latência, pool e erros; no Loki, procure `pool_exhausted`; no Jaeger, observe a espera no banco.
-6. Recupere o sistema e confirme que os sinais voltam ao normal.
-
-O ponto principal da demonstração é separar disponibilidade técnica de saúde da experiência do usuário.
+## Roteiro normal → incidente → recuperação
 
 ```bash
 ./scripts/normal.sh
 ./scripts/incident.sh
-./scripts/load.sh
+K6_INCIDENT=true K6_VUS=50 K6_DURATION=5m ./scripts/load.sh
 ./scripts/recover.sh
 ```
 
-Observe durante o roteiro. A interface de apresentação concentra os controles e
-os indicadores em uma tela:
+`scripts/load.sh` prefere `k6`, usa k6 em container quando Docker está
+disponível e cai para `hey` como alternativa. `K6_INCIDENT=true` ativa o modo
+incidente no `setup` do teste k6. Para carga curta, use por exemplo:
 
-- Interface da aplicação: <http://localhost:5055>
-- Índice técnico da API: <http://localhost:5055/checkout-api>
-- Grafana: <http://localhost:3000>
-- Prometheus: <http://localhost:9090>
-- Jaeger: <http://localhost:16686>
-- OpenDockWatch separado: <http://localhost:3001>
+```bash
+K6_INCIDENT=true K6_VUS=8 K6_DURATION=30s ./scripts/load.sh
+```
 
-O caminho da interface é definido por `APP_UI_PREFIX` no `.env` e usa `demo`
-por enquanto. Assim, ele poderá virar `porteira-tech` sem alterar a aplicação.
+Durante a pressão, compare `/health` com `/checkout`: o processo continua
+respondendo enquanto a jornada pode ficar lenta ou falhar.
 
-O OpenDockWatch possui Compose, configuração e ciclo de vida próprios em
-[opendockwatch/](opendockwatch/). Ele não é iniciado pelo stack principal.
+Para validar o contrato do repositório em uma única entrada, execute
+`scripts/validate-repository.sh`. Com Docker ausente, ele roda os testes
+estáticos e informa que a validação de Compose foi ignorada.
 
-Arquitetura detalhada: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+## Portas e acessos
 
-O workflow de deploy usa secrets do GitHub e não publica informações da VPS no
-código. No laboratório, ele copia o `.env.example` preenchido para `.env` em
-todo deploy. Não use essas credenciais de demonstração em produção.
+| Serviço | Acesso local | Papel |
+| --- | --- | --- |
+| Nginx / API | `http://localhost:5055` (`APP_PORT`) | `/health`, `/metrics`, `/checkout`, `/comprar`, `/demo` |
+| API interna | `api:8000` | upstream do Nginx |
+| PostgreSQL | `db:5432` | pool da API; não publicado no host |
+| Grafana | `http://localhost:3000` (`GRAFANA_PORT`) | dashboards |
+| Prometheus | `http://localhost:9090` | métricas e alertas |
+| Loki | `http://localhost:3100` | logs |
+| Jaeger | `http://localhost:16686` | traces |
+| OTLP | `localhost:4317` / `localhost:4318` | ingestão de traces |
+| Zabbix web | `http://localhost:8081` (`ZBX_WEB_PORT`) | perfil opcional usado pelo `up.sh` |
+| Zabbix server | `localhost:10051` (`ZBX_SERVER_PORT`) | perfil opcional |
+| Zabbix agent | `127.0.0.1:10150` (`ZBX_AGENT_PORT`) | perfil opcional |
+| OpenDockWatch | `http://localhost:3001` | stack separado |
+
+O caminho da interface é controlado por `APP_UI_PREFIX` no `.env` e é
+repassado pelo Compose à API. O padrão local é `/demo`; `/` continua sendo a
+visão macro e `/comprar` a jornada do usuário.
+
+OpenDockWatch possui Compose e ciclo de vida próprios em `opendockwatch/`; não
+é iniciado pelo stack principal. Ele precisa do socket Docker do host e deve
+ficar protegido.
+
+## Evidências
+
+No Grafana, use os dashboards da pasta `DIA D` para correlacionar p95,
+erros, pool em uso, pool aguardando e saúde técnica. No Loki, procure
+`pool_exhausted`; no Jaeger, selecione o serviço `checkout-api` e abra um
+trace de `/checkout`.
+
+O dashboard e o app usam UIDs provisionados para `prometheus`, `loki`,
+`jaeger`, `postgres` e Zabbix. As queries principais usam
+`checkout_http_*`, `checkout_errors_total` e `checkout_db_pool_*`.
+
+## Limitações do ambiente
+
+- O fluxo completo depende de Docker, volumes, rede Compose e PostgreSQL.
+- Sem Docker, é possível validar arquivos, testes e documentação, mas não
+  executar `docker compose config`, containers ou o fluxo end-to-end.
+- `promtail` precisa do socket Docker e dos logs de containers.
+- `scripts/load.sh` não gera carga sem `k6`, Docker funcional ou `hey`.
+- Os valores de `.env.example` são credenciais somente para demonstração.
+  Troque-os antes de qualquer uso real.
+
+Arquitetura detalhada: `docs/ARCHITECTURE.md`.
 
 ## Limpeza
 

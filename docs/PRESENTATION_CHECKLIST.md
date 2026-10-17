@@ -1,138 +1,131 @@
-# Checklist da apresentacao
+# Checklist da apresentação
 
-Use este roteiro depois do deploy. Envie um print por etapa ou um conjunto de prints que cubra os itens indicados.
+Roteiro local, reproduzível e baseado no contrato do repositório. Use os
+domínios públicos apenas quando o ambiente publicado estiver disponível; os
+acessos abaixo são a referência local.
 
-## 1. Duas telas
+## 1. Preparação
 
-- Abra `/` para a visão macro do apresentador.
-- Abra `/comprar` em outra aba para os participantes usarem o checkout.
-- Comece em `Normal` e confirme `OK` nas quatro etapas.
-- Na tela `/comprar`, envie cadastros preenchendo nome, idade e cargo/profissão.
-- Use a sequência: 5 cadastros para degradar, 12 para problema crítico e 22 para offline.
-
-Os limiares podem ser ajustados no `.env` por `DEMO_DEGRADED_AFTER`,
-`DEMO_CRITICAL_AFTER` e `DEMO_OFFLINE_AFTER`; depois, recrie o serviço da API.
-
-## 2. Estado inicial
-
-- Abra `https://aplicacao-ps.joaoxavier.app.br`.
-- Confirme o badge `SISTEMA NORMAL`.
-- Confirme `Saude tecnica: OK`.
-- Confirme `Jornada do usuario: OK`.
-- Envie um print da tela inicial.
-
-## 3. Acessos publicados
-
-Abra os quatro atalhos da aplicacao e confirme que carregam:
-
-- `https://grafana-ps.joaoxavier.app.br`
-- `https://jaeger-ps.joaoxavier.app.br`
-- `https://opendock-ps.joaoxavier.app.br`
-- `https://zabbix-ps.joaoxavier.app.br`
-
-Envie um print da tela de ferramentas ou dos acessos funcionando.
-
-## 4. Pressao controlada
-
-- Na visão macro, clique em `Degradar` e use `/comprar` para mostrar a lentidão.
-- Depois clique em `Saturar` e observe `INCIDENTE` e as falhas no checkout público.
-- Para a narrativa completa, use `Iniciar progressão`: `OK` → `DEGRADADO` → `INCIDENTE` → `OFFLINE`.
-- A página `/` continua acessível em `OFFLINE`; apenas o negócio deixa de concluir.
-
-## 5. Carga k6
-
-Para a demonstração gradual, mantenha a aplicação normal e execute:
+- [ ] Copiar `.env.example` para `.env`.
+- [ ] Validar Compose com `docker compose config --quiet`.
+- [ ] Subir com `scripts/up.sh`.
+- [ ] Executar `scripts/smoke.sh`.
+- [ ] Rodar `scripts/validate-repository.sh` para QA estático e Compose.
+- [ ] Confirmar que Docker, Bash e `curl` estão disponíveis.
+- [ ] Para carga, confirmar `k6` ou `hey`.
 
 ```bash
-./scripts/gradual.sh
+cp .env.example .env
+docker compose config --quiet
+chmod +x scripts/*.sh
+./scripts/up.sh
+./scripts/smoke.sh
+./scripts/validate-repository.sh
 ```
 
-O teste começa com 4 VUs por 2 minutos e adiciona 1 VU a cada minuto,
-mantendo o checkout lento, porém respondendo. Para uma rodada curta:
+Se Docker não estiver instalado, marque a preparação como parcial. Testes
+estáticos não substituem healthchecks, rede ou o fluxo end-to-end.
 
-```bash
-GRADUAL_MAX_VUS=8 GRADUAL_STEP_DURATION=20s ./scripts/gradual.sh
-```
+## 2. Acessos locais
 
-Na VPS, execute:
+- [ ] Visão macro: <http://localhost:5055/>.
+- [ ] Saúde: <http://localhost:5055/health>.
+- [ ] Índice técnico: <http://localhost:5055/checkout-api>.
+- [ ] Jornada do usuário: <http://localhost:5055/comprar>.
+- [ ] Grafana: <http://localhost:3000>.
+- [ ] Prometheus: <http://localhost:9090>.
+- [ ] Loki: <http://localhost:3100>.
+- [ ] Jaeger: <http://localhost:16686>.
+- [ ] OpenDockWatch separado: <http://localhost:3001>.
+- [ ] Zabbix web, quando o perfil estiver ativo: <http://localhost:8081>.
+
+O prefixo configurável por `APP_UI_PREFIX` tem padrão `/demo`. A raiz `/`
+continua sendo a visão macro usada pela apresentação.
+
+## 3. Estado normal
+
+- [ ] Executar `scripts/normal.sh`.
+- [ ] Confirmar `/health` HTTP 200 com `status: ok`.
+- [ ] Confirmar `/checkout` HTTP 200 e baixa latência.
+- [ ] Confirmar pool livre e ausência de erros recentes.
+- [ ] Capturar visão macro e resposta do `/health`.
+
+## 4. Incidente controlado
+
+- [ ] Executar `scripts/incident.sh`.
+- [ ] Confirmar pool em uso e requisições aguardando.
+- [ ] Confirmar que `/health` continua HTTP 200 sob pressão.
+- [ ] Confirmar que o JSON pode indicar `status: degraded` e
+      `pool_saturated: true`.
+- [ ] Confirmar que `/checkout` fica lento ou retorna 503 por pool esgotado.
+
+Para carga k6 local:
 
 ```bash
 K6_INCIDENT=true K6_VUS=50 K6_DURATION=5m K6_TEST_ID=checkout-heavy ./scripts/load.sh
 ```
 
-Esse comando usa `localhost:5055` e mede principalmente a aplicacao, sem atravessar o Cloudflare.
-Como a VPS esta na OCI em Ashburn, a latencia vista pelo navegador no Brasil pode ser maior.
-Para medir a experiencia real pelo DNS publico, execute uma segunda rodada:
+Para uma rodada curta:
 
 ```bash
-BASE_URL=https://aplicacao-ps.joaoxavier.app.br \
-K6_INCIDENT=true K6_VUS=20 K6_DURATION=2m K6_TEST_ID=checkout-public \
-./scripts/load.sh
+K6_INCIDENT=true K6_VUS=8 K6_DURATION=30s ./scripts/load.sh
 ```
 
-Compare a variacao entre as rodadas, e nao apenas o valor absoluto. A primeira isola a aplicacao;
-a segunda representa a jornada do usuario atraves do Cloudflare e da rede ate Ashburn.
+`scripts/load.sh` usa `load/k6.js`, ou k6 em container, ou `hey`. Sem uma
+dessas opções, a carga não será gerada.
 
-Confirme no terminal:
+Para progressão gradual, use `scripts/gradual.sh`. A sequência mantém o
+checkout respondendo enquanto adiciona VUs:
 
-- 50 VUs;
-- duracao de 5 minutos;
-- threshold avaliado;
-- percentual de erros e p95.
-
-Envie o print do resumo final do k6.
-
-## 6. Grafana — pasta DIA D
-
-Abra os dashboards nesta ordem:
-
-1. `01 - Servidor OK - porteira-server`
-2. `02 - Banco e Python/API OK`
-3. `03 - Visão operacional - tudo UP`
-4. `04 - Traces, logs, métricas e erros`
-
-No dashboard `04 - Traces, logs, métricas e erros`, confirme:
-
-- p95 do checkout;
-- pool em uso;
-- requisicoes aguardando;
-- erros de checkout;
-- health da API.
-
-No dashboard `Carga k6 - checkout`, confirme:
-
-- requisicoes por segundo;
-- falhas HTTP;
-- VUs;
-- checks;
-- latencia HTTP;
-- duracao das iteracoes.
-
-Envie os prints dos dois dashboards durante a carga.
-
-## 7. Logs e traces
-
-No Loki, procure por:
-
-```text
-{container="api-up"} |= "pool"
+```bash
+GRADUAL_MAX_VUS=8 GRADUAL_STEP_DURATION=20s ./scripts/gradual.sh
 ```
 
-No Jaeger, procure pelo serviço `checkout-api` e abra um trace de `/checkout`.
+## 5. Dashboards e sinais
 
-Envie um print de um log de `pool_exhausted` e de um trace mostrando a chamada ao banco.
+Abra, nesta ordem:
 
-## 8. Recuperacao
+1. `observability/grafana/dashboards/DIA D/01-servidor-ok.json` — servidor.
+2. `observability/grafana/dashboards/DIA D/02-banco-api-ok.json` — banco, API
+   e pool.
+3. `observability/grafana/dashboards/DIA D/03-visao-operacional.json` — visão
+   operacional.
+4. `observability/grafana/dashboards/DIA D/04-traces-logs-metricas-erros.json`
+   — traces, logs, métricas e erros.
+5. `observability/grafana/dashboards/k6-load.json` — carga k6.
 
-- Clique em `Normal` ou execute `./scripts/recover.sh`.
-- Aguarde o pool esvaziar.
-- Confirme que `Saude tecnica` e `Jornada do usuario` voltaram ao normal.
-- Confirme que os paineis deixam de apresentar novos erros.
+Confirme durante a pressão:
 
-Envie o print final da recuperacao.
+- p95 de `/checkout`;
+- `checkout_db_pool_in_use`, `checkout_db_pool_waiting` e tamanho do pool;
+- sucessos e 503 em `checkout_http_requests_total`;
+- `checkout_errors_total`;
+- scrape técnico `up{job="checkout-api"}`;
+- VUs, req/s, checks e p95 do k6.
 
-## Resultado esperado
+UIDs provisionados esperados: `prometheus`, `loki`, `jaeger`, `postgres` e
+`dfyxo4mmoy8lce` para Zabbix.
 
-Ao final, os prints devem comprovar a mensagem da palestra:
+## 6. Logs e traces
 
-> A infraestrutura pode estar online e verde enquanto a jornada do usuario ja esta degradada.
+- [ ] No Loki, executar `{container="api-up"} |= "pool"`.
+- [ ] Procurar o evento `pool_exhausted`.
+- [ ] Procurar `checkout_failed` e correlacionar horário com o p95.
+- [ ] No Jaeger, selecionar `checkout-api`.
+- [ ] Abrir um trace de `/checkout` e localizar a operação de banco.
+
+Os dashboards 03 e 04 filtram o evento emitido `pool_exhausted`. Se uma cópia
+antiga mostrar `db_pool_exhausted`, substitua pelo nome atual
+`pool_exhausted` antes da apresentação.
+
+## 7. Recuperação
+
+- [ ] Executar `scripts/recover.sh`.
+- [ ] Confirmar `/health` HTTP 200 e `/checkout` HTTP 200.
+- [ ] Confirmar pool `in_use=0` e `waiting=0` após drenagem.
+- [ ] Confirmar que não surgem novos erros de pool.
+- [ ] Repetir `scripts/recover.sh` para verificar idempotência.
+- [ ] Capturar painel final e resposta do `/health`.
+
+Mensagem final: infraestrutura online não prova que a jornada do usuário está
+saudável. O pool, a latência, os erros, logs e traces mostram a experiência.
