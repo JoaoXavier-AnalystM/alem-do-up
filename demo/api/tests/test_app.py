@@ -5,7 +5,15 @@ os.environ["APP_DB_NAME"] = "demo"
 os.environ["APP_DB_USER"] = "demo"
 os.environ["APP_DB_PASSWORD"] = "test-only"
 
-from demo.api.app import DemoStateRequest, app, demo_state, health_payload, register_submission, set_state
+from demo.api.app import (
+    DemoStateRequest,
+    app,
+    demo_state,
+    health_payload,
+    hold_tasks,
+    register_submission,
+    set_state,
+)
 
 
 def reset_state():
@@ -13,6 +21,7 @@ def reset_state():
     demo_state.pool_in_use = 0
     demo_state.waiting = 0
     demo_state.submissions = 0
+    hold_tasks.clear()
 
 
 def test_health_stays_200_while_incident_is_degraded():
@@ -31,7 +40,18 @@ def test_health_becomes_degraded_only_after_pool_threshold():
     demo_state.pool_size = 5
     payload = health_payload()
     assert payload["status"] == "degraded"
-    assert payload["http_status"] == 503
+    assert payload["http_status"] == 200
+    assert payload["journey_status"] == "degraded"
+
+
+def test_health_reports_pool_pressure_without_failing_liveness():
+    reset_state()
+    demo_state.mode = "incident"
+    demo_state.pool_in_use = demo_state.pool_size
+    payload = health_payload()
+    assert payload["http_status"] == 200
+    assert payload["status"] == "degraded"
+    assert payload["pool_saturated"] is True
 
 
 def test_expected_routes_exist():
@@ -67,6 +87,18 @@ def test_demo_state_accepts_progressive_mode():
     response = asyncio.run(set_state(DemoStateRequest(mode="progressive")))
     assert response["mode"] == "progressive"
     assert response["progression"] is True
+
+
+def test_normal_state_is_idempotent_after_incident():
+    reset_state()
+    demo_state.mode = "incident"
+    demo_state.pool_in_use = demo_state.pool_size
+    first = asyncio.run(set_state(DemoStateRequest(mode="normal")))
+    second = asyncio.run(set_state(DemoStateRequest(mode="normal")))
+    assert first["mode"] == "normal"
+    assert second["mode"] == "normal"
+    assert demo_state.pool_in_use == 0
+    assert demo_state.waiting == 0
 
 
 def test_public_submission_thresholds_progress_to_offline():

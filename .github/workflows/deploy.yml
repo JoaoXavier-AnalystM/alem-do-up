@@ -65,9 +65,13 @@ jobs:
           APP_DIR="$1"
           cd "$APP_DIR"
 
-          # O laboratório usa os valores preenchidos no .env.example em todo deploy.
-          cp .env.example .env
-          echo "Atualizado .env a partir de .env.example"
+          # Credenciais pertencem ao ambiente remoto; nunca substitua .env em deploy.
+          if [ ! -f .env ]; then
+            echo "Arquivo .env ausente em $APP_DIR; crie-o no VPS antes do deploy." >&2
+            exit 1
+          fi
+          chmod 600 .env
+          echo "Preservado .env existente no VPS"
 
           for variable in APP_DB_PASSWORD ZBX_DB_PASSWORD GRAFANA_ADMIN_PASSWORD; do
             if ! grep -Eq "^${variable}=.+$" .env; then
@@ -79,6 +83,7 @@ jobs:
           chmod +x scripts/*.sh
           export DOCKER_BUILDKIT=1
           COMPOSE="docker compose --profile zabbix"
+          $COMPOSE config --quiet
 
           # Migração dos nomes antigos; volumes e dados permanecem intactos.
           for old_container in checkout-db checkout-api checkout-nginx checkout-prometheus checkout-grafana checkout-loki checkout-promtail checkout-jaeger checkout-otel-collector checkout-zabbix-db checkout-zabbix-server checkout-zabbix-web checkout-zabbix-agent2; do
@@ -105,12 +110,35 @@ jobs:
             sleep 2
           done
 
+          if [ "${api_health:-}" != "healthy" ]; then
+            echo "A API não ficou saudável." >&2
+            exit 1
+          fi
+
           # Fase 2: sobe monitoramento, observabilidade e Zabbix.
           $COMPOSE up -d --remove-orphans --no-build zabbix-db jaeger loki prometheus promtail
           $COMPOSE up -d --force-recreate --no-build otel-collector
 
           # Por último inicia o proxy e as interfaces que dependem da stack.
           $COMPOSE up -d --remove-orphans --no-build nginx grafana zabbix-server zabbix-web zabbix-agent2
+
+          for attempt in $(seq 1 30); do
+            nginx_health="$(docker inspect --format '{{.State.Health.Status}}' nginx 2>/dev/null || true)"
+            if [ "$nginx_health" = "healthy" ]; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "O Nginx não ficou saudável a tempo." >&2
+              docker logs --tail 100 nginx || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+          if [ "${nginx_health:-}" != "healthy" ]; then
+            echo "O Nginx não ficou saudável." >&2
+            exit 1
+          fi
 
           $COMPOSE ps
           ./scripts/smoke.sh

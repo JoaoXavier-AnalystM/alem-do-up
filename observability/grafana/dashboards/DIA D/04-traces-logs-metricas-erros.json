@@ -1,13 +1,17 @@
 {
   "title": "04 - Traces, logs, métricas e erros",
+  "uid": "traces-logs-metricas-erros",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
   "panels": [
-    {"id": 1, "type": "stat", "title": "Health endpoint", "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}, "targets": [{"expr": "up{job=\"checkout-api\"}", "legendFormat": "API scrape"}]},
-    {"id": 2, "type": "timeseries", "title": "HTTP p95 (s)", "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[1m])))", "legendFormat": "p95"}]},
-    {"id": 3, "type": "timeseries", "title": "Pool: em uso / esperando / tamanho", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "targets": [{"expr": "checkout_db_pool_in_use", "legendFormat": "in_use"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "waiting"}, {"expr": "checkout_db_pool_size", "legendFormat": "size"}]},
-    {"id": 4, "type": "timeseries", "title": "Erros de checkout", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "targets": [{"expr": "rate(checkout_errors_total[1m])", "legendFormat": "{{reason}}"}]},
-    {"id": 5, "type": "logs", "title": "Logs de pool", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}, "targets": [{"expr": "{container=\"api-up\"} |= \"pool\"", "refId": "A", "datasource": {"type": "loki", "uid": "loki"}}]}
-  ]
+    {"id": 1, "type": "stat", "title": "Health endpoint", "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "up{job=\"checkout-api\"}", "legendFormat": "API scrape"}]},
+    {"id": 2, "type": "timeseries", "title": "RED - latencia HTTP (s)", "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "histogram_quantile(0.50, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[5m])))", "legendFormat": "p50"}, {"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[5m])))", "legendFormat": "p95"}, {"expr": "histogram_quantile(0.99, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path=\"/checkout\"}[5m])))", "legendFormat": "p99"}]},
+    {"id": 3, "type": "timeseries", "title": "Pool: em uso / esperando / tamanho / erros", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "checkout_db_pool_in_use", "legendFormat": "in_use"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "waiting"}, {"expr": "checkout_db_pool_size", "legendFormat": "size"}, {"expr": "sum(rate(checkout_db_pool_errors_total[5m]))", "legendFormat": "errors/s"}]},
+    {"id": 4, "type": "timeseries", "title": "RED - erros HTTP 5xx", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum(rate(checkout_http_requests_total{path=\"/checkout\",status=~\"5..\"}[5m]))", "legendFormat": "HTTP 5xx/s"}, {"expr": "sum(rate(checkout_errors_total[5m]))", "legendFormat": "erros da aplicacao/s"}]},
+    {"id": 5, "type": "timeseries", "title": "Pool - latencia de espera (s)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(checkout_db_pool_wait_seconds_bucket[5m])))", "legendFormat": "wait p95"}, {"expr": "checkout_db_pool_waiting", "legendFormat": "waiting"}]},
+    {"id": 6, "type": "logs", "title": "Logs de pool e correlacao", "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24}, "datasource": {"type": "loki", "uid": "loki"}, "targets": [{"expr": "{container=\"api-up\"} | json | event=~\"pool_exhausted|pool_error|checkout_failed\"", "refId": "A"}]}
+  ],
+  "links": [{"title": "Visao operacional", "url": "/d/presentation-overview"}, {"title": "Jaeger - checkout-api", "url": "https://jaeger-ps.joaoxavier.app.br/search?service=checkout-api"}]
 }

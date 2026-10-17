@@ -1,7 +1,11 @@
 apiVersion: 1
 providers:
   - name: palestra
+    orgId: 1
     type: file
+    disableDeletion: true
     updateIntervalSeconds: 10
-    folder: DIA D
-    options: {path: /var/lib/grafana/dashboards/DIA D}
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

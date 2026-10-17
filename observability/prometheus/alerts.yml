@@ -1,13 +1,48 @@
 groups:
   - name: checkout-demo
     rules:
-      - alert: CheckoutHighLatency
-        expr: histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path="/checkout"}[2m]))) > 1
+      - alert: CheckoutHighLatencyP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path="/checkout"}[5m]))) > 1
+        for: 1m
+        labels:
+          severity: warning
+          service: checkout-api
+        annotations:
+          summary: Checkout p95 acima de 1s
+          description: Checkout p95 ficou acima de 1s por 1 minuto.
+
+      - alert: CheckoutHighLatencyP99
+        expr: histogram_quantile(0.99, sum by (le) (rate(checkout_http_request_duration_seconds_bucket{path="/checkout"}[5m]))) > 2
+        for: 1m
+        labels:
+          severity: critical
+          service: checkout-api
+        annotations:
+          summary: Checkout p99 acima de 2s
+          description: Checkout p99 ficou acima de 2s por 1 minuto.
+
+      - alert: CheckoutHTTPErrorRate
+        expr: sum(rate(checkout_http_requests_total{path="/checkout",status=~"5.."}[5m])) / clamp_min(sum(rate(checkout_http_requests_total{path="/checkout"}[5m])), 1) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          service: checkout-api
+        annotations:
+          summary: Checkout HTTP 5xx acima de 5%
+          description: Mais de 5% das requisicoes do checkout retornaram HTTP 5xx.
+
+      - alert: CheckoutPoolErrors
+        expr: sum(rate(checkout_db_pool_errors_total[5m])) > 0
         for: 30s
-        labels: {severity: warning}
-        annotations: {summary: "Checkout p95 acima de 1s"}
+        labels:
+          severity: critical
+          service: checkout-api
+        annotations:
+          summary: Erros de pool PostgreSQL detectados
+          description: O pool da API registrou erros de aquisicao nos ultimos 5 minutos.
+
       - alert: CheckoutPoolWaiting
         expr: checkout_db_pool_waiting > 0
-        for: 15s
+        for: 30s
         labels: {severity: warning}
         annotations: {summary: "Requisições esperando por conexão"}

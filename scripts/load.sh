@@ -1,24 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 BASE_URL="${BASE_URL:-http://localhost:5055}"
+BASE_URL="${BASE_URL%/}"
 PROMETHEUS_RW_URL="${PROMETHEUS_RW_URL:-http://localhost:9090/api/v1/write}"
 PROMETHEUS_RW_TREND_STATS="${PROMETHEUS_RW_TREND_STATS:-p(50),p(90),p(95),avg,min,max}"
 K6_VUS="${K6_VUS:-8}"
 K6_DURATION="${K6_DURATION:-60s}"
 K6_TEST_ID="${K6_TEST_ID:-checkout-load}"
 K6_INCIDENT="${K6_INCIDENT:-false}"
+K6_CLEANUP="${K6_CLEANUP:-false}"
+HEY_DURATION="${HEY_DURATION:-$K6_DURATION}"
+HEY_CONCURRENCY="${HEY_CONCURRENCY:-$K6_VUS}"
+HEY_QPS="${HEY_QPS:-0}"
 
 if command -v k6 >/dev/null 2>&1; then
-  exec env BASE_URL="$BASE_URL" K6_VUS="$K6_VUS" K6_DURATION="$K6_DURATION" K6_TEST_ID="$K6_TEST_ID" K6_INCIDENT="$K6_INCIDENT" K6_PROMETHEUS_RW_SERVER_URL="$PROMETHEUS_RW_URL" K6_PROMETHEUS_RW_TREND_STATS="$PROMETHEUS_RW_TREND_STATS" k6 run -o experimental-prometheus-rw load/k6.js
+  exec env \
+    BASE_URL="$BASE_URL" \
+    K6_VUS="$K6_VUS" \
+    K6_DURATION="$K6_DURATION" \
+    K6_TEST_ID="$K6_TEST_ID" \
+    K6_INCIDENT="$K6_INCIDENT" \
+    K6_CLEANUP="$K6_CLEANUP" \
+    K6_PROMETHEUS_RW_SERVER_URL="$PROMETHEUS_RW_URL" \
+    K6_PROMETHEUS_RW_TREND_STATS="$PROMETHEUS_RW_TREND_STATS" \
+    k6 run -o experimental-prometheus-rw load/k6.js
 fi
 
 if command -v docker >/dev/null 2>&1; then
-  exec docker run --rm --network host -e BASE_URL="$BASE_URL" -e K6_VUS="$K6_VUS" -e K6_DURATION="$K6_DURATION" -e K6_TEST_ID="$K6_TEST_ID" -e K6_INCIDENT="$K6_INCIDENT" -e K6_PROMETHEUS_RW_SERVER_URL="$PROMETHEUS_RW_URL" -e K6_PROMETHEUS_RW_TREND_STATS="$PROMETHEUS_RW_TREND_STATS" -i grafana/k6 run -o experimental-prometheus-rw - < load/k6.js
+  exec docker run --rm --network host \
+    -e BASE_URL="$BASE_URL" \
+    -e K6_VUS="$K6_VUS" \
+    -e K6_DURATION="$K6_DURATION" \
+    -e K6_TEST_ID="$K6_TEST_ID" \
+    -e K6_INCIDENT="$K6_INCIDENT" \
+    -e K6_CLEANUP="$K6_CLEANUP" \
+    -e K6_PROMETHEUS_RW_SERVER_URL="$PROMETHEUS_RW_URL" \
+    -e K6_PROMETHEUS_RW_TREND_STATS="$PROMETHEUS_RW_TREND_STATS" \
+    -i grafana/k6 run -o experimental-prometheus-rw - < load/k6.js
 fi
 
 if command -v hey >/dev/null 2>&1; then
-  exec hey -z 60s -c 8 http://localhost:5055/checkout
+  hey_args=(-z "$HEY_DURATION" -c "$HEY_CONCURRENCY")
+  if [[ "$HEY_QPS" != "0" && -n "$HEY_QPS" ]]; then
+    hey_args+=(-q "$HEY_QPS")
+  fi
+  exec hey "${hey_args[@]}" "${BASE_URL}/checkout"
 fi
 
-echo 'Instale k6 ou hey para gerar carga.' >&2
+echo 'Instale k6, Docker ou hey para gerar carga.' >&2
 exit 1
